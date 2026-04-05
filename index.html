@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SoulfullBites | Artisanal Chocolate</title>
+    <meta name="description" content="SoulfullBites — Small-batch handmade chocolates crafted with soul and intention.">
+    <meta property="og:image" content="/assets/chocolate_mountain.png">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,400&family=Outfit:wght@200;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="./style.css">
+</head>
+<body>
+
+    <!-- LOADER -->
+    <div id="loader">
+        <div class="loader-inner">
+            <span class="loader-brand">SoulfullBites</span>
+            <div class="loader-line"><div class="loader-progress"></div></div>
+            <span class="loader-hint">Melting the finest cocoa...</span>
+        </div>
+    </div>
+
+    <!-- FIXED 3D CANVAS -->
+    <canvas id="main-canvas"></canvas>
+
+    <!-- NAV -->
+    <nav id="main-nav">
+        <span class="nav-brand">SoulfullBites</span>
+        <div class="nav-right">
+            <span class="nav-station" id="station-label">THE ORIGIN</span>
+            <a href="https://www.instagram.com/soulfulbitesofficial/" target="_blank" class="nav-insta">Instagram ↗</a>
+        </div>
+    </nav>
+
+    <!-- SCROLL SECTIONS -->
+    <div id="scroll-root">
+
+        <!-- SECTION 1: HERO -->
+        <section class="scroll-section" id="sec-hero">
+            <div class="label-wrap center">
+                <p class="label-tag">Est. 2024 · Handmade</p>
+                <h1>A River of<br><em>Pure Soul.</em></h1>
+                <p class="label-sub">Small-batch artisanal chocolates. Every bite carries the warmth of something made with love.</p>
+                <div class="scroll-hint">↓ Scroll to flow</div>
+            </div>
+        </section>
+
+        <!-- SECTION 2: MOUNTAIN (ORIGIN) -->
+        <section class="scroll-section" id="sec-origin">
+            <div class="label-wrap left">
+                <span class="label-tag">01. The Origin</span>
+                <h2>Born from the<br><em>Mountains.</em></h2>
+                <p>Our cocoa is grown on sun-drenched highland farms where rivers of pure flavour have run for centuries.</p>
+            </div>
+        </section>
+
+        <!-- SECTION 3: CHOCOLATE BAR -->
+        <section class="scroll-section" id="sec-craft">
+            <div class="label-wrap right">
+                <span class="label-tag">02. The Craft</span>
+                <h2>Hand-tempered.<br><em>Perfected.</em></h2>
+                <p>Every bar is hand-tempered in small batches by our artisans, ensuring a snap, a shimmer, and a melt unlike any other.</p>
+            </div>
+        </section>
+
+        <!-- SECTION 4: INGREDIENTS -->
+        <section class="scroll-section" id="sec-ingredients">
+            <div class="label-wrap left">
+                <span class="label-tag">03. The Essence</span>
+                <h2>Earth-grown<br><em>Integrity.</em></h2>
+                <p>Organic single-origin cocoa beans, hand-harvested sea salt, real Madagascan vanilla. Nothing else.</p>
+            </div>
+        </section>
+
+        <!-- SECTION 5: RIVER / CTA -->
+        <section class="scroll-section" id="sec-cta">
+            <div class="label-wrap center">
+                <span class="label-tag">The Arrival</span>
+                <h2>Be the first<br><em>to taste the soul.</em></h2>
+                <p>We're launching soon. Join the waitlist and receive a handmade welcome gift with your first order.</p>
+                <form id="waitlist-form">
+                    <input type="email" id="email-input" placeholder="Your email address" required>
+                    <button type="submit">Stay Soulful</button>
+                </form>
+            </div>
+        </section>
+
+    </div>
+
+    <!-- SIDE DOTS -->
+    <div id="side-dots">
+        <div class="dot active" data-idx="0"></div>
+        <div class="dot" data-idx="1"></div>
+        <div class="dot" data-idx="2"></div>
+        <div class="dot" data-idx="3"></div>
+        <div class="dot" data-idx="4"></div>
+    </div>
+
+    <script type="module" src="./main.js"></script>
+</body>
+</html>
