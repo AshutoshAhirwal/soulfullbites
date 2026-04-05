@@ -261,25 +261,85 @@ class ChocolateScene {
     }
 
     _buildWaterfall() {
-        // Vertical column of chocolate — smooth, no displacement spikes
-        const wfTex = this.loader.load('/assets/river_texture.png', (t) => {
-            t.wrapS = t.wrapT = THREE.RepeatWrapping;
-            t.repeat.set(1, 5);
+        // Procedural GLSL falling-chocolate shader — no photo repetition
+        const geo = new THREE.PlaneGeometry(12, 90, 20, 120);
+
+        const mat = new THREE.ShaderMaterial({
+            uniforms: {
+                uTime:      { value: 0 },
+                uChocDark:  { value: new THREE.Color(0x2a1208) },
+                uChocMid:   { value: new THREE.Color(0x6b3318) },
+                uHighlight: { value: new THREE.Color(0xfff0d8) },
+            },
+            transparent: true,
+            vertexShader: /* glsl */`
+                uniform float uTime;
+                varying vec2  vUv;
+                varying float vHeight;
+
+                // Value noise
+                float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+                float vnoise(vec2 p) {
+                    vec2 i = floor(p); vec2 f = fract(p);
+                    vec2 u = f*f*(3.0-2.0*f);
+                    return mix(mix(hash(i),           hash(i+vec2(1,0)), u.x),
+                               mix(hash(i+vec2(0,1)), hash(i+vec2(1,1)), u.x), u.y);
+                }
+
+                void main() {
+                    vUv = uv;
+                    vec3 pos = position;
+
+                    // Flowing downward coordinate
+                    float flow = uv.y - uTime * 1.8;
+
+                    // Thin vertical streaks — like falling chocolate threads
+                    float streak = sin(uv.x * 18.0 + vnoise(vec2(uv.x * 6.0, flow * 2.0)) * 3.0) * 0.4;
+
+                    // Width taper — wider at top, narrower at base
+                    float taper = 1.0 - uv.y * 0.4;
+
+                    pos.z = streak * taper * 0.8;
+                    vHeight = streak;
+
+                    gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
+                }
+            `,
+            fragmentShader: /* glsl */`
+                uniform vec3  uChocDark;
+                uniform vec3  uChocMid;
+                uniform vec3  uHighlight;
+                uniform float uTime;
+
+                varying vec2  vUv;
+                varying float vHeight;
+
+                float hash(vec2 p) { return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453); }
+
+                void main() {
+                    // Chocolate color from dark core to mid
+                    float t = clamp(vHeight * 0.5 + 0.5, 0.0, 1.0);
+                    vec3 choc = mix(uChocDark, uChocMid, t);
+
+                    // Vertical streak highlights — thin white gloss lines
+                    float flow = vUv.y - uTime * 1.8;
+                    float gloss = pow(max(0.0, sin(vUv.x * 18.0 + flow * 5.0)), 20.0);
+                    choc += uHighlight * gloss * 0.6;
+
+                    // Edge transparency — falls naturally at sides
+                    float edgeFade = smoothstep(0.0, 0.12, vUv.x) * smoothstep(0.0, 0.12, 1.0 - vUv.x);
+                    // Top & bottom fade
+                    float endFade  = smoothstep(0.0, 0.08, vUv.y) * smoothstep(0.0, 0.05, 1.0 - vUv.y);
+
+                    gl_FragColor = vec4(choc, edgeFade * endFade * 0.92);
+                }
+            `,
+            side: THREE.DoubleSide,
         });
 
-        const geo = new THREE.PlaneGeometry(16, 90, 1, 1);
-        const mat = new THREE.MeshPhysicalMaterial({
-            map:              wfTex,
-            roughness:        0.05,
-            metalness:        0.0,
-            clearcoat:        1.0,
-            clearcoatRoughness: 0.04,
-            transparent:      true,
-            opacity:          0.82,
-        });
-
-        this.waterfall = new THREE.Mesh(geo, mat);
-        this.waterfall.position.set(0, 28, -155);
+        this.waterfall    = new THREE.Mesh(geo, mat);
+        this.waterfallMat = mat;
+        this.waterfall.position.set(0, 20, -148);
         this.scene.add(this.waterfall);
     }
 
@@ -309,16 +369,58 @@ class ChocolateScene {
     }
 
     _buildImagePlanes() {
-        // Solid-background photo cards that float and react to mouse — no transparency artifacts
+        // White-key shader: discards near-white/cream pixels so images float without a card border
+        const whiteKeyVert = /* glsl */`
+            varying vec2 vUv;
+            void main() {
+                vUv = uv;
+                gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+            }
+        `;
+        const whiteKeyFrag = /* glsl */`
+            uniform sampler2D uTex;
+            uniform float     uThresh;   // white-key threshold
+            uniform float     uSoftness; // edge softness
+            varying vec2 vUv;
+
+            void main() {
+                vec4  col  = texture2D(uTex, vUv);
+                // Luminance of the pixel
+                float lum  = dot(col.rgb, vec3(0.299, 0.587, 0.114));
+                // How "colourful" is the pixel (distance from grey axis)
+                float sat  = length(col.rgb - vec3(lum));
+                // Key out: high luminance AND low saturation = background
+                float bg   = smoothstep(uThresh - uSoftness, uThresh + uSoftness, lum)
+                           * smoothstep(0.0, 0.08, 1.0 - sat * 4.0);
+                float alpha = 1.0 - bg;
+                if (alpha < 0.05) discard;
+                gl_FragColor = vec4(col.rgb, alpha);
+            }
+        `;
+
         const configs = [
             { file: '/assets/chocolate_bar.png',
-              pos: [-20, 3, -28], rot: [0.03, -0.28, 0.03], scale: 15 },
+              pos: [-20, 3,  -28], rot: [0.03, -0.28, 0.03], scale: 15, thresh: 0.88 },
             { file: '/assets/cocoa_beans.png',
-              pos: [ 18, 2, -52],  rot: [0.0,  0.20, -0.02], scale: 13 },
+              pos: [ 18, 2,  -55], rot: [0.0,   0.20, -0.02], scale: 13, thresh: 0.85 },
+            // Our Story
+            { file: '/assets/maker.png',
+              pos: [ 16, 4,  -88], rot: [0.02, -0.14, 0.02], scale: 16, thresh: 0.92 },
+            // Craft
             { file: '/assets/chocolate_bar.png',
-              pos: [ 16, 4, -85],  rot: [0.02, -0.14, 0.02], scale: 12 },
+              pos: [-17, 3, -125], rot: [0.0,   0.22,  0.0],  scale: 13, thresh: 0.88 },
+            // Flavors
+            { file: '/assets/flavors.png',
+              pos: [ 20, 2, -165], rot: [0.0,  -0.18,  0.01], scale: 17, thresh: 0.87 },
+            // Ingredients
             { file: '/assets/cocoa_beans.png',
-              pos: [-17, 3, -115], rot: [0.0,   0.22,  0.0],  scale: 13 },
+              pos: [-18, 3, -210], rot: [0.03,  0.25, -0.02], scale: 14, thresh: 0.85 },
+            // Promise
+            { file: '/assets/maker.png',
+              pos: [ 18, 4, -260], rot: [0.01, -0.20,  0.02], scale: 15, thresh: 0.92 },
+            // CTA
+            { file: '/assets/flavors.png',
+              pos: [-20, 2, -310], rot: [0.0,   0.18,  0.0],  scale: 14, thresh: 0.87 },
         ];
 
         this.imagePlanes = [];
@@ -326,9 +428,22 @@ class ChocolateScene {
             const tex = this.loader.load(c.file);
             tex.colorSpace = THREE.SRGBColorSpace;
 
-            // Opaque material — no transparency checkerboard artifacts
-            const mat = new THREE.MeshBasicMaterial({ map: tex, side: THREE.FrontSide });
-            const mesh = new THREE.Mesh(new THREE.PlaneGeometry(c.scale, c.scale), mat);
+            const mat = new THREE.ShaderMaterial({
+                uniforms: {
+                    uTex:      { value: tex },
+                    uThresh:   { value: c.thresh },
+                    uSoftness: { value: 0.06 },
+                },
+                vertexShader:   whiteKeyVert,
+                fragmentShader: whiteKeyFrag,
+                transparent:    true,
+                depthWrite:     false,
+                side:           THREE.DoubleSide,
+            });
+
+            const mesh = new THREE.Mesh(
+                new THREE.PlaneGeometry(c.scale, c.scale), mat
+            );
             mesh.position.set(...c.pos);
             mesh.rotation.set(...c.rot);
             mesh.userData = { basePos: [...c.pos], baseRot: [...c.rot], phase: i * 1.3 };
@@ -339,7 +454,7 @@ class ChocolateScene {
 
     _bindScroll() {
         const sections = [...document.querySelectorAll('.scroll-section')];
-        const stations = ['THE ORIGIN', 'THE CRAFT', 'THE ESSENCE', 'THE ARRIVAL'];
+        const stations = ['THE ORIGIN', 'OUR STORY', 'THE CRAFT', 'THE FLAVOURS', 'THE ESSENCE', 'THE PROMISE', 'THE ARRIVAL', 'THE ARRIVAL'];
         const dots     = [...document.querySelectorAll('.dot')];
         const stLabel  = document.getElementById('station-label');
 
@@ -351,12 +466,12 @@ class ChocolateScene {
             onUpdate: ({ progress: p }) => {
                 this.scrollP = p;
 
-                // Camera glides forward & slightly down as we flow
-                this.camera.position.z  = 35  - p * 160;
-                this.camera.position.y  = 8   - p * 12 + Math.sin(p * Math.PI * 2) * 1.5;
-                this.camera.rotation.x  = -0.04 - p * 0.12;
+                // Camera travels full scene: Z from +35 (hero) to -380 (final CTA)
+                this.camera.position.z  = 35  - p * 415;
+                this.camera.position.y  = 8   - p * 16 + Math.sin(p * Math.PI * 2) * 1.5;
+                this.camera.rotation.x  = -0.04 - p * 0.14;
 
-                const idx = Math.min(Math.floor(p * 5), 4);
+                const idx = Math.min(Math.floor(p * 8), 7);
                 dots.forEach((d, i) => d.classList.toggle('active', i === idx));
                 if (stLabel) stLabel.textContent = stations[Math.min(idx, stations.length - 1)];
             },
@@ -407,9 +522,10 @@ class ChocolateScene {
             );
         }
 
-        // Waterfall texture scrolls (it's still photo-based)
-        if (this.waterfall?.material?.map)
-            this.waterfall.material.map.offset.y -= 0.03;
+        // Drive procedural waterfall shader
+        if (this.waterfallMat) {
+            this.waterfallMat.uniforms.uTime.value = this.time;
+        }
 
         // Very subtle, natural mouse parallax
         gsap.to(this.camera.rotation, {

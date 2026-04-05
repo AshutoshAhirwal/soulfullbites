@@ -301,6 +301,123 @@ h2 {
     50% { transform: translateY(-6px); }
 }
 
+/* ---- BLOCKQUOTE ---- */
+blockquote {
+    margin-top: 2rem;
+    padding-left: 1.2rem;
+    border-left: 2px solid var(--gold);
+    font-family: 'Cormorant Garamond', serif;
+    font-style: italic;
+    font-size: 1.1rem;
+    color: var(--choc-mid);
+    line-height: 1.7;
+}
+blockquote cite {
+    display: block;
+    margin-top: 0.5rem;
+    font-size: 0.75rem;
+    font-style: normal;
+    letter-spacing: 0.15rem;
+    color: var(--text-light);
+}
+
+/* ---- INGREDIENT LIST ---- */
+.ingredient-list {
+    list-style: none;
+    margin-top: 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.7rem;
+}
+.ingredient-list li {
+    font-size: 0.9rem;
+    letter-spacing: 0.08rem;
+    color: var(--choc-mid);
+}
+
+/* ---- FLAVOR CARDS ---- */
+.flavor-cards {
+    display: flex;
+    gap: 1.5rem;
+    margin-top: 2.5rem;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+.flavor-card {
+    flex: 1;
+    min-width: 160px;
+    max-width: 220px;
+    background: rgba(255,255,255,0.55);
+    border: 1px solid var(--glass-border);
+    border-radius: 1.2rem;
+    padding: 2rem 1.5rem;
+    text-align: center;
+    backdrop-filter: blur(10px);
+    transition: transform 0.4s cubic-bezier(0.16,1,0.3,1), box-shadow 0.4s;
+    pointer-events: auto;
+}
+.flavor-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 12px 40px rgba(139, 94, 60, 0.15);
+}
+.flavor-icon {
+    display: block;
+    font-size: 2rem;
+    margin-bottom: 1rem;
+}
+.flavor-card strong {
+    display: block;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.2rem;
+    color: var(--choc-dark);
+    margin-bottom: 0.6rem;
+}
+.flavor-card p {
+    font-size: 0.85rem;
+    line-height: 1.6;
+    color: var(--text-mid);
+}
+
+/* ---- PROMISE GRID ---- */
+.promise-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin-top: 2.5rem;
+    max-width: 680px;
+    margin-left: auto;
+    margin-right: auto;
+}
+.promise-item {
+    background: rgba(255,255,255,0.5);
+    border: 1px solid var(--glass-border);
+    border-radius: 1rem;
+    padding: 1.8rem 1.5rem;
+    text-align: center;
+    backdrop-filter: blur(8px);
+    transition: transform 0.3s;
+    pointer-events: auto;
+}
+.promise-item:hover { transform: translateY(-4px); }
+.promise-item > span {
+    display: block;
+    font-size: 1.8rem;
+    margin-bottom: 0.8rem;
+}
+.promise-item strong {
+    display: block;
+    font-size: 0.9rem;
+    font-weight: 600;
+    letter-spacing: 0.05rem;
+    color: var(--choc-dark);
+    margin-bottom: 0.5rem;
+}
+.promise-item p {
+    font-size: 0.82rem;
+    line-height: 1.6;
+    color: var(--text-mid);
+}
+
 /* ---- RESPONSIVE ---- */
 @media (max-width: 768px) {
     #main-nav { padding: 2rem 5%; }
