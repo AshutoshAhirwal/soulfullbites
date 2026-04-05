@@ -7,141 +7,141 @@ gsap.registerPlugin(ScrollTrigger);
 
 // ─── LENIS ────────────────────────────────────────────
 const lenis = new Lenis({
-    duration: 1.4,
-    easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
-    smoothWheel: true,
+  duration: 1.4,
+  easing: (t) => Math.min(1, 1.001 - Math.pow(2, -10 * t)),
+  smoothWheel: true,
 });
 gsap.ticker.add((time) => lenis.raf(time * 1000));
 gsap.ticker.lagSmoothing(0);
 
 // ─── SCENE ────────────────────────────────────────────
 class ChocolateScene {
-    constructor() {
-        this.canvas  = document.querySelector('#main-canvas');
-        this.W       = window.innerWidth;
-        this.H       = window.innerHeight;
-        this.mouse   = { x: 0, y: 0 };
-        this.time    = 0;
-        this.scrollP = 0;
+  constructor() {
+    this.canvas = document.querySelector('#main-canvas');
+    this.W = window.innerWidth;
+    this.H = window.innerHeight;
+    this.mouse = { x: 0, y: 0 };
+    this.time = 0;
+    this.scrollP = 0;
 
-        this.renderer = new THREE.WebGLRenderer({
-            canvas:    this.canvas,
-            antialias: true,
-            alpha:     false,
-        });
-        this.renderer.setSize(this.W, this.H);
-        this.renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+    this.renderer = new THREE.WebGLRenderer({
+      canvas: this.canvas,
+      antialias: true,
+      alpha: false,
+    });
+    this.renderer.setSize(this.W, this.H);
+    this.renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
 
-        // Physically-based rendering for realism
-        this.renderer.toneMapping             = THREE.ACESFilmicToneMapping;
-        this.renderer.toneMappingExposure     = 1.1;
-        this.renderer.shadowMap.enabled       = true;
-        this.renderer.shadowMap.type          = THREE.PCFSoftShadowMap;
+    // Physically-based rendering for realism
+    this.renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    this.renderer.toneMappingExposure = 1.1;
+    this.renderer.shadowMap.enabled = true;
+    this.renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
-        this.scene  = new THREE.Scene();
-        // Warm sky color — NOT a sphere — just a color gradient via background
-        this.scene.background = new THREE.Color(0xf5e6d0);
-        // Subtle depth fog matching the sky
-        this.scene.fog = new THREE.FogExp2(0xede0c8, 0.007);
+    this.scene = new THREE.Scene();
+    // Warm sky color — NOT a sphere — just a color gradient via background
+    this.scene.background = new THREE.Color(0xf5e6d0);
+    // Subtle depth fog matching the sky
+    this.scene.fog = new THREE.FogExp2(0xede0c8, 0.007);
 
-        this.camera = new THREE.PerspectiveCamera(55, this.W / this.H, 0.1, 1200);
-        this.camera.position.set(0, 8, 35);
-        this.camera.lookAt(0, 0, 0);
+    this.camera = new THREE.PerspectiveCamera(55, this.W / this.H, 0.1, 1200);
+    this.camera.position.set(0, 8, 35);
+    this.camera.lookAt(0, 0, 0);
 
-        this.loader = new THREE.TextureLoader();
+    this.loader = new THREE.TextureLoader();
 
-        this._buildLights();
-        this._buildGround();
-        this._buildRiver();
-        this._buildParticles();
-        this._buildImagePlanes();
-        this._bindScroll();
-        this._bindMouse();
-        this._bindResize();
-        this._loop();
-    }
+    this._buildLights();
+    this._buildGround();
+    this._buildRiver();
+    this._buildParticles();
+    this._buildImagePlanes();
+    this._bindScroll();
+    this._bindMouse();
+    this._bindResize();
+    this._loop();
+  }
 
-    _tex(path, cb) {
-        const t = this.loader.load(path, cb);
-        return t;
-    }
+  _tex(path, cb) {
+    const t = this.loader.load(path, cb);
+    return t;
+  }
 
-    _buildLights() {
-        // Soft, warm ambient — not overpowering
-        this.scene.add(new THREE.AmbientLight(0xfff8f0, 0.8));
+  _buildLights() {
+    // Soft, warm ambient — not overpowering
+    this.scene.add(new THREE.AmbientLight(0xfff8f0, 0.8));
 
-        // Main sun — warm directional with shadows
-        this.sun = new THREE.DirectionalLight(0xfff0d8, 3.5);
-        this.sun.position.set(40, 80, 30);
-        this.sun.castShadow = true;
-        this.sun.shadow.mapSize.set(2048, 2048);
-        this.sun.shadow.camera.near = 1;
-        this.sun.shadow.camera.far  = 400;
-        this.sun.shadow.camera.left  = -100;
-        this.sun.shadow.camera.right =  100;
-        this.sun.shadow.camera.top   =  100;
-        this.sun.shadow.camera.bottom = -100;
-        this.sun.shadow.bias = -0.001;
-        this.scene.add(this.sun);
+    // Main sun — warm directional with shadows
+    this.sun = new THREE.DirectionalLight(0xfff0d8, 3.5);
+    this.sun.position.set(40, 80, 30);
+    this.sun.castShadow = true;
+    this.sun.shadow.mapSize.set(2048, 2048);
+    this.sun.shadow.camera.near = 1;
+    this.sun.shadow.camera.far = 400;
+    this.sun.shadow.camera.left = -100;
+    this.sun.shadow.camera.right = 100;
+    this.sun.shadow.camera.top = 100;
+    this.sun.shadow.camera.bottom = -100;
+    this.sun.shadow.bias = -0.001;
+    this.scene.add(this.sun);
 
-        // Soft fill from opposite side — bounce light off cream ground
-        const fill = new THREE.DirectionalLight(0xffe0b2, 1.2);
-        fill.position.set(-30, 20, -20);
-        this.scene.add(fill);
+    // Soft fill from opposite side — bounce light off cream ground
+    const fill = new THREE.DirectionalLight(0xffe0b2, 1.2);
+    fill.position.set(-30, 20, -20);
+    this.scene.add(fill);
 
-        // Warm golden rim highlight
-        this.rimLight = new THREE.PointLight(0xffc06a, 6, 150);
-        this.rimLight.position.set(-25, 15, 5);
-        this.scene.add(this.rimLight);
-    }
+    // Warm golden rim highlight
+    this.rimLight = new THREE.PointLight(0xffc06a, 6, 150);
+    this.rimLight.position.set(-25, 15, 5);
+    this.scene.add(this.rimLight);
+  }
 
-    _buildGround() {
-        // Photo-realistic ground using the mountain image as a large backdrop card
-        const tex = this.loader.load('/assets/chocolate_mountain.png', (t) => {
-            t.colorSpace = THREE.SRGBColorSpace;
-        });
-        // Large background plane — positioned far back, no displacement spikes
-        const bgMat = new THREE.MeshBasicMaterial({ map: tex, side: THREE.FrontSide });
-        const bgGeo = new THREE.PlaneGeometry(400, 300);
-        this.bgPlane = new THREE.Mesh(bgGeo, bgMat);
-        this.bgPlane.position.set(0, 30, -450);
-        this.scene.add(this.bgPlane);
+  _buildGround() {
+    // Photo-realistic ground using the mountain image as a large backdrop card
+    const tex = this.loader.load('/assets/chocolate_mountain.png', (t) => {
+      t.colorSpace = THREE.SRGBColorSpace;
+    });
+    // Large background plane — positioned far back, no displacement spikes
+    const bgMat = new THREE.MeshBasicMaterial({ map: tex, side: THREE.FrontSide });
+    const bgGeo = new THREE.PlaneGeometry(400, 300);
+    this.bgPlane = new THREE.Mesh(bgGeo, bgMat);
+    this.bgPlane.position.set(0, 30, -450);
+    this.scene.add(this.bgPlane);
 
-        // Smooth ground plane — uses a subtle normal map trick with the texture
-        const groundTex = this.loader.load('/assets/chocolate_mountain.png', (t) => {
-            t.wrapS = t.wrapT = THREE.RepeatWrapping;
-            t.repeat.set(6, 6);
-        });
-        const geo = new THREE.PlaneGeometry(500, 900, 4, 4);
-        const mat = new THREE.MeshStandardMaterial({
-            color:     0xc9936a,
-            normalMap: groundTex,
-            roughness: 0.95,
-            metalness: 0.0,
-        });
-        this.ground = new THREE.Mesh(geo, mat);
-        this.ground.rotation.x   = -Math.PI / 2;
-        this.ground.position.set(0, -14, -200);
-        this.ground.receiveShadow = true;
-        this.scene.add(this.ground);
-    }
+    // Smooth ground plane — uses a subtle normal map trick with the texture
+    const groundTex = this.loader.load('/assets/chocolate_mountain.png', (t) => {
+      t.wrapS = t.wrapT = THREE.RepeatWrapping;
+      t.repeat.set(6, 6);
+    });
+    const geo = new THREE.PlaneGeometry(500, 900, 4, 4);
+    const mat = new THREE.MeshStandardMaterial({
+      color: 0xc9936a,
+      normalMap: groundTex,
+      roughness: 0.95,
+      metalness: 0.0,
+    });
+    this.ground = new THREE.Mesh(geo, mat);
+    this.ground.rotation.x = -Math.PI / 2;
+    this.ground.position.set(0, -14, -200);
+    this.ground.receiveShadow = true;
+    this.scene.add(this.ground);
+  }
 
-    _buildRiver() {
-        // HIGH RESOLUTION river geometry for smooth waves
-        const geo = new THREE.PlaneGeometry(38, 700, 80, 400);
+  _buildRiver() {
+    // HIGH RESOLUTION river geometry for smooth waves
+    const geo = new THREE.PlaneGeometry(38, 700, 80, 400);
 
-        // ── Custom GLSL shader: procedural liquid chocolate ──
-        const mat = new THREE.ShaderMaterial({
-            uniforms: {
-                uTime:      { value: 0 },
-                uLight:     { value: new THREE.Vector3(40, 80, 30) },
-                uCamera:    { value: new THREE.Vector3(0, 8, 35) },
-                uSunColor:  { value: new THREE.Color(0xfff0d8) },
-                uChocDark:  { value: new THREE.Color(0x3d2012) },
-                uChocMid:   { value: new THREE.Color(0x7b3f1e) },
-                uChocLight: { value: new THREE.Color(0xb86030) },
-            },
-            vertexShader: /* glsl */`
+    // ── Custom GLSL shader: procedural liquid chocolate ──
+    const mat = new THREE.ShaderMaterial({
+      uniforms: {
+        uTime: { value: 0 },
+        uLight: { value: new THREE.Vector3(40, 80, 30) },
+        uCamera: { value: new THREE.Vector3(0, 8, 35) },
+        uSunColor: { value: new THREE.Color(0xfff0d8) },
+        uChocDark: { value: new THREE.Color(0x3d2012) },
+        uChocMid: { value: new THREE.Color(0x7b3f1e) },
+        uChocLight: { value: new THREE.Color(0xb86030) },
+      },
+      vertexShader: /* glsl */`
                 uniform float uTime;
                 varying vec3 vWorldPos;
                 varying vec3 vNormal;
@@ -203,7 +203,7 @@ class ChocolateScene {
                     gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
                 }
             `,
-            fragmentShader: /* glsl */`
+      fragmentShader: /* glsl */`
                 uniform vec3  uLight;
                 uniform vec3  uCamera;
                 uniform vec3  uSunColor;
@@ -249,53 +249,53 @@ class ChocolateScene {
                     gl_FragColor = vec4(color, 1.0);
                 }
             `,
-            side: THREE.FrontSide,
-        });
+      side: THREE.FrontSide,
+    });
 
-        this.river    = new THREE.Mesh(geo, mat);
-        this.riverMat = mat;
-        this.river.rotation.x = -Math.PI / 2;
-        this.river.position.set(0, -9, -220);
-        this.scene.add(this.river);
+    this.river = new THREE.Mesh(geo, mat);
+    this.riverMat = mat;
+    this.river.rotation.x = -Math.PI / 2;
+    this.river.position.set(0, -9, -220);
+    this.scene.add(this.river);
+  }
+
+  // Waterfall removed as requested
+
+  _buildParticles() {
+    // Fine cocoa mist — very small, sparse, natural
+    const geo = new THREE.BufferGeometry();
+    const count = 1500;
+    const pos = new Float32Array(count * 3);
+
+    for (let i = 0; i < count; i++) {
+      pos[i * 3] = (Math.random() - 0.5) * 100;
+      pos[i * 3 + 1] = Math.random() * 30 - 5;
+      pos[i * 3 + 2] = (Math.random() - 0.5) * 350;
     }
 
-    // Waterfall removed as requested
+    geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+    const mat = new THREE.PointsMaterial({
+      color: 0xc9993a,
+      size: 0.12,
+      transparent: true,
+      opacity: 0.35,
+      depthWrite: false,
+    });
 
-    _buildParticles() {
-        // Fine cocoa mist — very small, sparse, natural
-        const geo   = new THREE.BufferGeometry();
-        const count = 1500;
-        const pos   = new Float32Array(count * 3);
+    this.particles = new THREE.Points(geo, mat);
+    this.scene.add(this.particles);
+  }
 
-        for (let i = 0; i < count; i++) {
-            pos[i * 3]     = (Math.random() - 0.5) * 100;
-            pos[i * 3 + 1] = Math.random() * 30 - 5;
-            pos[i * 3 + 2] = (Math.random() - 0.5) * 350;
-        }
-
-        geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
-        const mat = new THREE.PointsMaterial({
-            color:       0xc9993a,
-            size:        0.12,
-            transparent: true,
-            opacity:     0.35,
-            depthWrite:  false,
-        });
-
-        this.particles = new THREE.Points(geo, mat);
-        this.scene.add(this.particles);
-    }
-
-    _buildImagePlanes() {
-        // High-end circular vignette shader for floating photos
-        const circleVert = /* glsl */`
+  _buildImagePlanes() {
+    // High-end circular vignette shader for floating photos
+    const circleVert = /* glsl */`
             varying vec2 vUv;
             void main() {
                 vUv = uv;
                 gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
             }
         `;
-        const circleFrag = /* glsl */`
+    const circleFrag = /* glsl */`
             uniform sampler2D uTex;
             varying vec2 vUv;
             void main() {
@@ -309,160 +309,160 @@ class ChocolateScene {
             }
         `;
 
-        const configs = [
-            { file: '/assets/chocolate_bar.png', pos: [-20, 3,  -28], rot: [0.03, -0.28, 0.03], scale: 15 },
-            { file: '/assets/cocoa_beans.png',   pos: [ 18, 2,  -55], rot: [0.0,   0.20, -0.02], scale: 13 },
-            { file: '/assets/maker.png',         pos: [ 16, 4,  -88], rot: [0.02, -0.14, 0.02], scale: 16 },
-            { file: '/assets/chocolate_bar.png', pos: [-17, 3, -125], rot: [0.0,   0.22,  0.0],  scale: 13 },
-            { file: '/assets/flavors.png',       pos: [ 20, 2, -165], rot: [0.0,  -0.18,  0.01], scale: 17 },
-            { file: '/assets/cocoa_beans.png',   pos: [-18, 3, -210], rot: [0.03,  0.25, -0.02], scale: 14 },
-            { file: '/assets/maker.png',         pos: [ 18, 4, -260], rot: [0.01, -0.20,  0.02], scale: 15 },
-            { file: '/assets/flavors.png',       pos: [-20, 2, -310], rot: [0.0,   0.18,  0.0],  scale: 14 },
-        ];
+    const configs = [
+      { file: '/assets/chocolate_bar.png', pos: [-20, 3, -28], rot: [0.03, -0.28, 0.03], scale: 15 },
+      { file: '/assets/cocoa_beans.png', pos: [18, 2, -55], rot: [0.0, 0.20, -0.02], scale: 13 },
+      { file: '/assets/maker.png', pos: [16, 4, -88], rot: [0.02, -0.14, 0.02], scale: 16 },
+      { file: '/assets/chocolate_bar.png', pos: [-17, 3, -125], rot: [0.0, 0.22, 0.0], scale: 13 },
+      { file: '/assets/flavors.png', pos: [20, 2, -165], rot: [0.0, -0.18, 0.01], scale: 17 },
+      { file: '/assets/cocoa_beans.png', pos: [-18, 3, -210], rot: [0.03, 0.25, -0.02], scale: 14 },
+      { file: '/assets/maker.png', pos: [18, 4, -260], rot: [0.01, -0.20, 0.02], scale: 15 },
+      { file: '/assets/flavors.png', pos: [-20, 2, -310], rot: [0.0, 0.18, 0.0], scale: 14 },
+    ];
 
-        this.imagePlanes = [];
-        configs.forEach((c, i) => {
-            const tex = this.loader.load(c.file);
-            tex.colorSpace = THREE.SRGBColorSpace;
+    this.imagePlanes = [];
+    configs.forEach((c, i) => {
+      const tex = this.loader.load(c.file);
+      tex.colorSpace = THREE.SRGBColorSpace;
 
-            const mat = new THREE.ShaderMaterial({
-                uniforms: { uTex: { value: tex } },
-                vertexShader: circleVert,
-                fragmentShader: circleFrag,
-                transparent: true,
-                depthWrite: false,
-                side: THREE.DoubleSide
-            });
+      const mat = new THREE.ShaderMaterial({
+        uniforms: { uTex: { value: tex } },
+        vertexShader: circleVert,
+        fragmentShader: circleFrag,
+        transparent: true,
+        depthWrite: false,
+        side: THREE.DoubleSide
+      });
 
-            const mesh = new THREE.Mesh(new THREE.PlaneGeometry(c.scale, c.scale), mat);
-            mesh.position.set(...c.pos);
-            mesh.rotation.set(...c.rot);
-            mesh.userData = { basePos: [...c.pos], baseRot: [...c.rot], phase: i * 1.3 };
-            this.scene.add(mesh);
-            this.imagePlanes.push(mesh);
-        });
+      const mesh = new THREE.Mesh(new THREE.PlaneGeometry(c.scale, c.scale), mat);
+      mesh.position.set(...c.pos);
+      mesh.rotation.set(...c.rot);
+      mesh.userData = { basePos: [...c.pos], baseRot: [...c.rot], phase: i * 1.3 };
+      this.scene.add(mesh);
+      this.imagePlanes.push(mesh);
+    });
+  }
+
+  _bindScroll() {
+    const sections = [...document.querySelectorAll('.scroll-section')];
+    const stations = ['THE ORIGIN', 'OUR STORY', 'THE CRAFT', 'THE FLAVOURS', 'THE ESSENCE', 'THE PROMISE', 'THE ARRIVAL', 'THE ARRIVAL'];
+    const dots = [...document.querySelectorAll('.dot')];
+    const stLabel = document.getElementById('station-label');
+
+    ScrollTrigger.create({
+      trigger: '#scroll-root',
+      start: 'top top',
+      end: 'bottom bottom',
+      scrub: true,
+      onUpdate: ({ progress: p }) => {
+        this.scrollP = p;
+        this.camera.position.z = 35 - p * 415;
+        this.camera.position.y = 8 - p * 16 + Math.sin(p * Math.PI * 2) * 1.5;
+        this.camera.rotation.x = -0.04 - p * 0.14;
+
+        const idx = Math.min(Math.floor(p * 8), 7);
+        dots.forEach((d, i) => d.classList.toggle('active', i === idx));
+        if (stLabel) stLabel.textContent = stations[Math.min(idx, stations.length - 1)];
+      },
+    });
+
+    sections.forEach((sec) => {
+      const wrap = sec.querySelector('.label-wrap');
+      if (!wrap) return;
+      ScrollTrigger.create({
+        trigger: sec,
+        start: 'top 68%',
+        end: 'bottom 32%',
+        onEnter: () => wrap.classList.add('visible'),
+        onLeave: () => wrap.classList.remove('visible'),
+        onEnterBack: () => wrap.classList.add('visible'),
+        onLeaveBack: () => wrap.classList.remove('visible'),
+      });
+    });
+  }
+
+  _bindMouse() {
+    window.addEventListener('mousemove', (e) => {
+      this.mouse.x = (e.clientX / window.innerWidth - 0.5) * 2;
+      this.mouse.y = (e.clientY / window.innerHeight - 0.5) * 2;
+    });
+  }
+
+  _bindResize() {
+    window.addEventListener('resize', () => {
+      this.W = window.innerWidth;
+      this.H = window.innerHeight;
+      this.camera.aspect = this.W / this.H;
+      this.camera.updateProjectionMatrix();
+      this.renderer.setSize(this.W, this.H);
+    });
+  }
+
+  _loop() {
+    this.time += 0.012;
+
+    if (this.riverMat) {
+      this.riverMat.uniforms.uTime.value = this.time;
+      this.riverMat.uniforms.uCamera.value.set(
+        this.camera.position.x, this.camera.position.y, this.camera.position.z
+      );
     }
 
-    _bindScroll() {
-        const sections = [...document.querySelectorAll('.scroll-section')];
-        const stations = ['THE ORIGIN', 'OUR STORY', 'THE CRAFT', 'THE FLAVOURS', 'THE ESSENCE', 'THE PROMISE', 'THE ARRIVAL', 'THE ARRIVAL'];
-        const dots     = [...document.querySelectorAll('.dot')];
-        const stLabel  = document.getElementById('station-label');
+    // Camera mouse-parallax
+    gsap.to(this.camera.rotation, {
+      y: this.mouse.x * -0.03,
+      duration: 2.5,
+      overwrite: 'auto',
+    });
 
-        ScrollTrigger.create({
-            trigger: '#scroll-root',
-            start:   'top top',
-            end:     'bottom bottom',
-            scrub:   true,
-            onUpdate: ({ progress: p }) => {
-                this.scrollP = p;
-                this.camera.position.z  = 35  - p * 415;
-                this.camera.position.y  = 8   - p * 16 + Math.sin(p * Math.PI * 2) * 1.5;
-                this.camera.rotation.x  = -0.04 - p * 0.14;
+    this.imagePlanes.forEach((plane) => {
+      const { basePos, baseRot, phase } = plane.userData;
+      plane.position.y = basePos[1] + Math.sin(this.time * 0.5 + phase) * 0.6;
+      plane.rotation.y = baseRot[1] + this.mouse.x * 0.04 + Math.sin(this.time * 0.3 + phase) * 0.015;
+      plane.rotation.x = baseRot[0] + this.mouse.y * 0.025;
+    });
 
-                const idx = Math.min(Math.floor(p * 8), 7);
-                dots.forEach((d, i) => d.classList.toggle('active', i === idx));
-                if (stLabel) stLabel.textContent = stations[Math.min(idx, stations.length - 1)];
-            },
-        });
+    this.rimLight.intensity = 6 + Math.sin(this.time * 0.4) * 0.5;
+    this.particles.rotation.y += 0.0002;
 
-        sections.forEach((sec) => {
-            const wrap = sec.querySelector('.label-wrap');
-            if (!wrap) return;
-            ScrollTrigger.create({
-                trigger:     sec,
-                start:       'top 68%',
-                end:         'bottom 32%',
-                onEnter:     () => wrap.classList.add('visible'),
-                onLeave:     () => wrap.classList.remove('visible'),
-                onEnterBack: () => wrap.classList.add('visible'),
-                onLeaveBack: () => wrap.classList.remove('visible'),
-            });
-        });
-    }
-
-    _bindMouse() {
-        window.addEventListener('mousemove', (e) => {
-            this.mouse.x = (e.clientX / window.innerWidth  - 0.5) * 2;
-            this.mouse.y = (e.clientY / window.innerHeight - 0.5) * 2;
-        });
-    }
-
-    _bindResize() {
-        window.addEventListener('resize', () => {
-            this.W = window.innerWidth;
-            this.H = window.innerHeight;
-            this.camera.aspect = this.W / this.H;
-            this.camera.updateProjectionMatrix();
-            this.renderer.setSize(this.W, this.H);
-        });
-    }
-
-    _loop() {
-        this.time += 0.012;
-
-        if (this.riverMat) {
-            this.riverMat.uniforms.uTime.value = this.time;
-            this.riverMat.uniforms.uCamera.value.set(
-                this.camera.position.x, this.camera.position.y, this.camera.position.z
-            );
-        }
-
-        // Camera mouse-parallax
-        gsap.to(this.camera.rotation, {
-            y: this.mouse.x * -0.03,
-            duration: 2.5,
-            overwrite: 'auto',
-        });
-
-        this.imagePlanes.forEach((plane) => {
-            const { basePos, baseRot, phase } = plane.userData;
-            plane.position.y = basePos[1] + Math.sin(this.time * 0.5 + phase) * 0.6;
-            plane.rotation.y = baseRot[1] + this.mouse.x * 0.04 + Math.sin(this.time * 0.3 + phase) * 0.015;
-            plane.rotation.x = baseRot[0] + this.mouse.y * 0.025;
-        });
-
-        this.rimLight.intensity = 6 + Math.sin(this.time * 0.4) * 0.5;
-        this.particles.rotation.y += 0.0002;
-
-        this.renderer.render(this.scene, this.camera);
-        requestAnimationFrame(() => this._loop());
-    }
+    this.renderer.render(this.scene, this.camera);
+    requestAnimationFrame(() => this._loop());
+  }
 }
 
 // ─── LOADER ───────────────────────────────────────────
 window.addEventListener('load', () => {
-    const brand  = document.querySelector('.loader-brand');
-    const bar    = document.querySelector('.loader-progress');
-    const loader = document.getElementById('loader');
+  const brand = document.querySelector('.loader-brand');
+  const bar = document.querySelector('.loader-progress');
+  const loader = document.getElementById('loader');
 
-    setTimeout(() => brand?.classList.add('show'), 200);
+  setTimeout(() => brand?.classList.add('show'), 200);
 
-    let w = 0;
-    const iv = setInterval(() => {
-        w = Math.min(w + 3, 100);
-        if (bar) bar.style.width = w + '%';
-        if (w >= 100) {
-            clearInterval(iv);
-            setTimeout(() => {
-                if (loader) loader.style.opacity = '0';
-                setTimeout(() => {
-                    if (loader) loader.style.display = 'none';
-                    new ChocolateScene();
-                }, 1200);
-            }, 400);
-        }
-    }, 35);
+  let w = 0;
+  const iv = setInterval(() => {
+    w = Math.min(w + 3, 100);
+    if (bar) bar.style.width = w + '%';
+    if (w >= 100) {
+      clearInterval(iv);
+      setTimeout(() => {
+        if (loader) loader.style.opacity = '0';
+        setTimeout(() => {
+          if (loader) loader.style.display = 'none';
+          new ChocolateScene();
+        }, 1200);
+      }, 400);
+    }
+  }, 35);
 });
 
 // ─── FORM ─────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
-    document.getElementById('waitlist-form')?.addEventListener('submit', (e) => {
-        e.preventDefault();
-        const btn = e.target.querySelector('button');
-        if (btn) {
-            btn.textContent = '✓ You\'re on the list!';
-            btn.style.background = 'linear-gradient(135deg, #6aaf6a, #3a8a3a)';
-        }
-    });
+  document.getElementById('waitlist-form')?.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const btn = e.target.querySelector('button');
+    if (btn) {
+      btn.textContent = '✓ You\'re on the list!';
+      btn.style.background = 'linear-gradient(135deg, #6aaf6a, #3a8a3a)';
+    }
+  });
 });
