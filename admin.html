@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin | SoulfullBites</title>
+    <link rel="icon" type="image/png" href="/assets/logo.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,400&family=Outfit:wght@200;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="./style.css">
+    <link rel="stylesheet" href="./admin.css">
+</head>
+<body class="admin-body">
+    <main class="admin-shell">
+        <section class="admin-hero">
+            <a href="/" class="admin-brand">SoulfullBites</a>
+            <div>
+                <p class="admin-kicker">Store Console</p>
+                <h1>Orders &amp; Operations</h1>
+                <p class="admin-copy">Track incoming orders, update delivery status, and keep the storefront organized without leaving Vercel.</p>
+            </div>
+        </section>
+
+        <section id="admin-login-panel" class="admin-card admin-login-card">
+            <div>
+                <p class="admin-kicker">Secure Access</p>
+                <h2>Admin Login</h2>
+                <p class="admin-copy">Use your admin password to open the order dashboard.</p>
+            </div>
+            <form id="admin-login-form" class="admin-login-form">
+                <label class="admin-field">
+                    <span>Password</span>
+                    <input id="admin-password" type="password" autocomplete="current-password" placeholder="Enter admin password" required>
+                </label>
+                <button type="submit" id="admin-login-button" class="admin-primary-btn">Open Dashboard</button>
+            </form>
+        </section>
+
+        <section id="admin-dashboard" class="admin-dashboard hidden">
+            <div class="admin-toolbar admin-card">
+                <div class="admin-toolbar-row">
+                    <div>
+                        <p class="admin-kicker">Live Orders</p>
+                        <h2>Dashboard</h2>
+                    </div>
+                    <div class="admin-toolbar-actions">
+                        <button type="button" id="admin-refresh" class="admin-secondary-btn">Refresh</button>
+                        <button type="button" id="admin-logout" class="admin-ghost-btn">Logout</button>
+                    </div>
+                </div>
+
+                <div class="admin-filters">
+                    <label class="admin-field">
+                        <span>Search</span>
+                        <input id="admin-search" type="search" placeholder="Search by name, email, phone or order id">
+                    </label>
+                    <label class="admin-field admin-field-small">
+                        <span>Status</span>
+                        <select id="admin-status-filter">
+                            <option value="all">All</option>
+                            <option value="new">New</option>
+                            <option value="confirmed">Confirmed</option>
+                            <option value="preparing">Preparing</option>
+                            <option value="delivered">Delivered</option>
+                            <option value="cancelled">Cancelled</option>
+                        </select>
+                    </label>
+                </div>
+
+                <div id="admin-stats" class="admin-stats"></div>
+            </div>
+
+            <div id="admin-state" class="admin-state hidden"></div>
+            <div id="admin-orders" class="admin-orders"></div>
+        </section>
+    </main>
+
+    <script type="module" src="./admin.js"></script>
+</body>
+</html>

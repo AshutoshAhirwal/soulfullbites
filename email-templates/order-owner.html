@@ -1,0 +1,41 @@
+<!-- THE OWNER NOTIFICATION HTML -->
+<div style="background-color: #fdf6ee; padding: 40px 20px; font-family: 'Helvetica', sans-serif; color: #4a2c1a;">
+  <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 12px; border: 1px solid #e0d5c5; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.05);">
+    
+    <div style="background-color: #4a2c1a; padding: 25px; text-align: center;">
+      <h1 style="color: #fdf6ee; margin: 0; font-size: 20px; letter-spacing: 3px; font-weight: bold; text-transform: uppercase;">NEW ARTISANAL ORDER</h1>
+    </div>
+
+    <div style="padding: 40px;">
+      
+      <div style="margin-bottom: 30px;">
+          <h3 style="border-bottom: 1px solid #fdf6ee; padding-bottom: 8px; font-size: 14px; text-transform: uppercase; letter-spacing: 1px;">Customer Details</h3>
+          <p style="margin: 10px 0; font-size: 16px;"><strong>Name:</strong> {{user_name}}</p>
+          <p style="margin: 10px 0; font-size: 16px;"><strong>Phone:</strong> {{user_phone}}</p>
+          <p style="margin: 10px 0; font-size: 16px;"><strong>Email:</strong> {{user_email}}</p>
+      </div>
+
+      <div style="margin-bottom: 30px;">
+          <h3 style="border-bottom: 1px solid #fdf6ee; padding-bottom: 8px; font-size: 14px; text-transform: uppercase; letter-spacing: 1px;">Shipping Destination</h3>
+          <p style="margin: 10px 0; font-size: 16px; line-height: 1.5;">{{user_address}}</p>
+      </div>
+
+      <div style="background-color: #fdf6ee; padding: 25px; border-radius: 10px; margin-bottom: 30px;">
+          <h3 style="margin-top: 0; font-size: 11px; opacity: 0.6; letter-spacing: 1px; text-transform: uppercase;">Ordered Items</h3>
+          <p style="font-size: 18px; margin: 10px 0; font-weight: bold;">{{order_items}}</p>
+          <hr style="border: none; border-top: 1px solid #4a2c1a; opacity: 0.1; margin: 15px 0;">
+          <p style="font-size: 1.2rem; font-weight: bold; margin: 0; color: #c9936a;">TOTAL: {{order_total}}</p>
+      </div>
+
+      <div style="font-style: italic; color: #666; font-size: 14px; border-left: 3px solid #fdf6ee; padding-left: 15px;">
+          "{{user_note}}"
+      </div>
+
+    </div>
+
+    <div style="background: #fcfcfc; padding: 20px; text-align: center; border-top: 1px solid #eee;">
+        <p style="font-size: 12px; color: #999; margin: 0;">Sent via SoulfullBites Sales Automator</p>
+    </div>
+
+  </div>
+</div>

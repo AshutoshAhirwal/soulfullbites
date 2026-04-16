@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FAQ | SoulfullBites</title>
+    <link rel="icon" type="image/png" href="/assets/logo.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,400&family=Outfit:wght@200;400;600&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="./style.css">
+    <style>
+        .faq-list {
+            margin-top: 4rem;
+        }
+
+        .faq-item {
+            margin-bottom: 2.5rem;
+            border-bottom: 1px solid var(--glass-border);
+            padding-bottom: 1.5rem;
+        }
+
+        .faq-item h3 {
+            font-size: 1.5rem;
+            margin-bottom: 0.8rem;
+            color: var(--choc-dark);
+        }
+
+        .faq-item p {
+            font-size: 1rem;
+            line-height: 1.6;
+            color: var(--text-mid);
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- LOADER -->
+    <div id="loader">
+        <div class="loader-inner">
+            <span class="loader-brand">SoulfullBites</span>
+            <div class="loader-line"><div class="loader-progress"></div></div>
+            <span class="loader-hint">Melting the finest cocoa...</span>
+        </div>
+    </div>
+
+    <!-- NAV -->
+    <nav id="main-nav">
+        <div class="nav-left">
+            <a href="/" class="nav-brand">SoulfullBites</a>
+        </div>
+        <div class="nav-links">
+            <a href="/about" class="nav-link">Our Story</a>
+            <a href="/shop" class="nav-link">Shop</a>
+            <a href="/faq" class="nav-link">FAQ</a>
+        </div>
+        <div class="nav-right">
+            <a href="https://www.instagram.com/soulfulbitesofficial/" target="_blank" rel="noopener noreferrer" class="nav-insta">Instagram ↗</a>
+        </div>
+    </nav>
+
+    <main class="content-pg">
+        <div class="container">
+            <header class="hero-small">
+                <span class="label-tag">Common Questions</span>
+                <h1>FAQ</h1>
+            </header>
+
+            <div class="faq-list">
+                <div class="faq-item">
+                    <h3>Do you ship internationally?</h3>
+                    <p>Currently, we ship within India only. We are working hard to bring SoulfullBites to a global
+                        audience.</p>
+                </div>
+                <div class="faq-item">
+                    <h3>Is your chocolate vegan?</h3>
+                    <p>Our "Dark & Bold" bar is 100% vegan. Our "Milk & Velvet" and "White & Rose" contain high-quality
+                        grass-fed dairy.</p>
+                </div>
+                <div class="faq-item">
+                    <h3>How should I store my bars?</h3>
+                    <p>We recommend storing them in a cool, dry place between 16°C and 20°C. Avoid refrigeration if
+                        possible, as it can dull the flavor profile.</p>
+                </div>
+                <div class="faq-item">
+                    <h3>Are your ingredients organic?</h3>
+                    <p>Yes, we use certified organic cacao, unrefined sugars, and natural flavorings. No additives or
+                        preservatives ever.</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- FOOTER -->
+    <footer style="background: var(--choc-dark); color: var(--cream); padding: 5rem 5% 2rem; position: relative; z-index: 20;">
+        <div class="container">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 4rem; border-bottom: 1px solid rgba(253, 246, 238, 0.1); padding-bottom: 4rem; margin-bottom: 2rem;">
+                <div>
+                    <h3 style="color: var(--cream); margin-bottom: 1.5rem; font-family: 'Cormorant Garamond', serif; font-size: 1.8rem;">SoulfullBites</h3>
+                    <p style="opacity: 0.7; font-size: 0.9rem; line-height: 1.6;">Small-batch handmade chocolates crafted with soul and intention in our mountain kitchen.</p>
+                </div>
+                <div>
+                    <h4 style="margin-bottom: 1.2rem; font-size: 0.8rem; letter-spacing: 0.2rem; text-transform: uppercase;">Discover</h4>
+                    <ul style="list-style: none; display: flex; flex-direction: column; gap: 0.8rem;">
+                        <li><a href="/" style="color: inherit; text-decoration: none; opacity: 0.7; font-size: 0.9rem;">Home</a></li>
+                        <li><a href="/about" style="color: inherit; text-decoration: none; opacity: 0.7; font-size: 0.9rem;">Our Story</a></li>
+                        <li><a href="/shop" style="color: inherit; text-decoration: none; opacity: 0.7; font-size: 0.9rem;">Shop</a></li>
+                        <li><a href="/faq" style="color: inherit; text-decoration: none; opacity: 0.7; font-size: 0.9rem;">FAQ</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 style="margin-bottom: 1.2rem; font-size: 0.8rem; letter-spacing: 0.2rem; text-transform: uppercase;">Follow Us</h4>
+                    <a href="https://www.instagram.com/soulfulbitesofficial/" target="_blank" rel="noopener noreferrer" style="color: inherit; text-decoration: none; opacity: 0.7; font-size: 0.9rem;">Instagram ↗</a>
+                </div>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; opacity: 0.4; font-size: 0.7rem; letter-spacing: 0.1rem; text-transform: uppercase;">
+                <p>&copy; 2024 SoulfullBites.</p>
+                <p>Made with &hearts; in the Mountains</p>
+            </div>
+        </div>
+    </footer>
+
+    <script type="module" src="./main.js"></script>
+</body>
+
+</html>

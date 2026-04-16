@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Checkout | SoulfullBites</title>
+    <link rel="icon" type="image/png" href="/assets/logo.png">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="bg-warm">
+    <div id="loader" class="melting-loader">SOULFULL<span>BITES</span></div>
+
+    <nav class="glass-nav">
+        <div class="nav-left">
+            <a href="/" class="brand-small">Soulfull<span>Bites</span></a>
+        </div>
+        <div class="nav-links">
+            <a href="/shop" class="nav-link">Back to Shop</a>
+        </div>
+    </nav>
+
+    <main class="content-pg" style="padding-top: 120px;">
+        <div class="container" style="max-width: 800px;">
+            <h1 class="text-center" style="margin-bottom: 3rem;">Checkout</h1>
+            
+            <div style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 4rem;">
+                <!-- SHIPPING FORM -->
+                <div class="checkout-form">
+                    <h3 style="margin-bottom: 1.5rem;">Shipping Information</h3>
+                    <form id="secure-checkout-form" style="display: flex; flex-direction: column; gap: 1.2rem;">
+                        <input type="text" id="checkout-name" placeholder="Full Name" required style="padding: 1rem; border-radius: 0.5rem; border: 1px solid #ddd;">
+                        <div style="display: flex; gap: 1rem;">
+                            <input type="email" id="checkout-email" placeholder="Email Address" required style="flex: 1; padding: 1rem; border-radius: 0.5rem; border: 1px solid #ddd;">
+                            <input type="tel" id="checkout-phone" placeholder="Phone Number" required style="width: 180px; padding: 1rem; border-radius: 0.5rem; border: 1px solid #ddd;">
+                        </div>
+                        <input type="text" id="checkout-address" placeholder="Shipping Address" required style="padding: 1rem; border-radius: 0.5rem; border: 1px solid #ddd;">
+                        <div style="display: flex; gap: 1rem;">
+                            <input type="text" id="checkout-city" placeholder="City" required style="flex: 1; padding: 1rem; border-radius: 0.5rem; border: 1px solid #ddd;">
+                            <input type="text" id="checkout-zip" placeholder="Pincode" required style="width: 120px; padding: 1rem; border-radius: 0.5rem; border: 1px solid #ddd;">
+                        </div>
+                        <textarea id="checkout-note" placeholder="Special Instructions (Optional)" style="padding: 1rem; border-radius: 0.5rem; border: 1px solid #ddd; height: 80px; resize: none;"></textarea>
+                        
+                        <p style="font-size: 0.8rem; color: #666; margin-top: 1rem;">✨ Your order request goes straight to our kitchen team for confirmation and delivery planning.</p>
+                        <button type="submit" id="pay-button" class="btn-buy" style="width: 100%; padding: 1.5rem; background: var(--choc-dark); font-size: 1.1rem;">
+                            Confirm & Send Order Request
+                        </button>
+                    </form>
+                </div>
+
+                <!-- ORDER SUMMARY -->
+                <div class="order-summary" style="background: rgba(255,255,255,0.6); padding: 2rem; border-radius: 1.5rem; border: 1px solid var(--glass-border); height: fit-content;">
+                    <h3 style="margin-bottom: 1.5rem;">Order Summary</h3>
+                    <div id="checkout-items-list" style="margin-bottom: 1.5rem;">
+                        <!-- Items injected here -->
+                    </div>
+                    <div style="border-top: 1px solid #ddd; padding-top: 1rem; display: flex; justify-content: space-between; font-weight: 700; font-size: 1.2rem;">
+                        <span>Total</span>
+                        <span id="checkout-total">₹0.00</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script type="module" src="/main.js"></script>
+    <script>
+        // Inline script to handle loading summary
+        window.addEventListener('DOMContentLoaded', () => {
+            const bag = JSON.parse(localStorage.getItem('choc_bag')) || [];
+            const list = document.getElementById('checkout-items-list');
+            const totalEl = document.getElementById('checkout-total');
+            let total = 0;
+
+            if (bag.length === 0) {
+                window.location.href = '/shop';
+            }
+
+            bag.forEach(item => {
+                total += item.price * item.qty;
+                const div = document.createElement('div');
+                div.style.display = 'flex';
+                div.style.justifyContent = 'space-between';
+                div.style.marginBottom = '0.8rem';
+                div.style.fontSize = '0.9rem';
+                div.innerHTML = `<span>${item.name} × ${item.qty}</span> <span>₹${item.price * item.qty}</span>`;
+                list.appendChild(div);
+            });
+
+            totalEl.textContent = `₹${total}.00`;
+
+            // Loader fade out
+            setTimeout(() => {
+                document.getElementById('loader').style.opacity = '0';
+                setTimeout(() => document.getElementById('loader').remove(), 500);
+            }, 1000);
+        });
+    </script>
+</body>
+</html>
