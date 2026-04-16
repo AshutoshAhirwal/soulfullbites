@@ -50,6 +50,24 @@ const isTestingSender = (value) => /@resend\.dev>?$/i.test(cleanText(value));
 const isAllowedTestRecipient = (email, allowedList) => allowedList.some((entry) => entry.toLowerCase() === email.toLowerCase());
 const filterTestingRecipients = (emails, allowedList) => emails.filter((email) => isAllowedTestRecipient(email, allowedList));
 
+const verifyTurnstile = async (token) => {
+  const secretKey = process.env.TURNSTILE_SECRET_KEY;
+  if (!secretKey) return true;
+  if (!token) return false;
+
+  try {
+    const response = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: `secret=${encodeURIComponent(secretKey)}&response=${encodeURIComponent(token)}`,
+    });
+    const outcome = await response.json();
+    return outcome.success;
+  } catch {
+    return false;
+  }
+};
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
@@ -87,7 +105,18 @@ export default async function handler(req, res) {
     order_total_value,
     user_note,
     source,
+    security_token,
+    hp_data,
   } = req.body ?? {};
+
+  if (cleanText(hp_data)) {
+    return res.status(200).json({ success: true, message: 'Waitlist saved' });
+  }
+
+  const isHuman = await verifyTurnstile(security_token);
+  if (!isHuman) {
+    return res.status(403).json({ error: 'Security verification failed. Please refresh the page and try again.' });
+  }
 
   const safeSource = cleanText(source);
   const safeEmail = cleanText(user_email);

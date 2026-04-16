@@ -105,12 +105,15 @@ document.addEventListener('DOMContentLoaded', () => {
     setFormMessage(form, 'Saving your request...');
 
     try {
+      const formData = new FormData(form);
       const payload = await requestJson(API_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           user_email: email,
           source: 'SoulfullBites Waitlist',
+          security_token: formData.get('cf-turnstile-response'),
+          hp_data: formData.get('hp_field'),
         }),
       });
 
@@ -323,10 +326,15 @@ document.addEventListener('DOMContentLoaded', () => {
     setFormMessage(orderForm, 'Saving your order...');
 
     try {
+      const formData = new FormData(orderForm);
       const payload = await requestJson(API_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(orderData),
+        body: JSON.stringify({
+          ...orderData,
+          security_token: formData.get('cf-turnstile-response'),
+          hp_data: formData.get('hp_field'),
+        }),
       });
 
       const history = getStoredJson(HISTORY_STORAGE_KEY, []);
