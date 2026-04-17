@@ -4,40 +4,197 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FAQ | SoulfullBites</title>
+    <title>Archive of Intent | SoulfullBites</title>
     <link rel="icon" type="image/png" href="/assets/logo.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link
-        href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,400&family=Outfit:wght@200;400;600&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,400&family=Outfit:wght@200;400;600&family=Playfair+Display:ital,wght@0,700;1,400&display=swap"
         rel="stylesheet">
     <link rel="stylesheet" href="./style.css">
     <style>
-        .faq-list {
-            margin-top: 4rem;
+        :root {
+            --archive-bg: #f8f1e9;
+            --archive-accent: #c9993a;
+        }
+
+        body {
+            background: var(--archive-bg);
+            color: var(--choc-dark);
+            overflow-x: hidden;
+        }
+
+        #faq-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            pointer-events: none;
+            opacity: 0.5;
+        }
+
+        .archive-hero {
+            padding: 15vh 5% 5vh;
+            text-align: center;
+        }
+
+        .archive-hero h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(3rem, 10vw, 7rem);
+            font-style: italic;
+            margin-bottom: 2rem;
+            line-height: 0.9;
+        }
+
+        .archive-hero p {
+            font-size: 1.1rem;
+            opacity: 0.6;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        /* ---- ACCORDION ---- */
+        .faq-accordion {
+            max-width: 900px;
+            margin: 10vh auto;
+            padding: 0 5%;
+        }
+
+        .faq-section {
+            background: rgba(255, 255, 255, 0.4);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 2rem;
+            padding: 1.5rem;
+            margin-bottom: 4rem;
+            box-shadow: 0 40px 100px rgba(74, 44, 26, 0.05);
+        }
+
+        .faq-section-title {
+            font-size: 0.7rem;
+            letter-spacing: 0.4rem;
+            text-transform: uppercase;
+            color: var(--archive-accent);
+            margin-bottom: 2.5rem;
+            padding-left: 2rem;
         }
 
         .faq-item {
-            margin-bottom: 2.5rem;
-            border-bottom: 1px solid var(--glass-border);
-            padding-bottom: 1.5rem;
+            border-bottom: 1px solid rgba(74, 44, 26, 0.05);
+            padding: 1.5rem 2rem;
+            cursor: pointer;
+            transition: all 0.4s ease;
         }
 
-        .faq-item h3 {
-            font-size: 1.5rem;
-            margin-bottom: 0.8rem;
-            color: var(--choc-dark);
+        .faq-item:last-child {
+            border-bottom: none;
         }
 
-        .faq-item p {
-            font-size: 1rem;
-            line-height: 1.6;
-            color: var(--text-mid);
+        .faq-question {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 2rem;
+        }
+
+        .faq-question h3 {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.8rem;
+            font-weight: 400;
+            margin: 0;
+            transition: color 0.3s;
+        }
+
+        .faq-item:hover .faq-question h3 {
+            color: var(--archive-accent);
+        }
+
+        .faq-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 1px solid rgba(74, 44, 26, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.4s;
+        }
+
+        .faq-item.active .faq-icon {
+            background: var(--archive-accent);
+            border-color: var(--archive-accent);
+            transform: rotate(45deg);
+        }
+
+        .faq-icon svg {
+            width: 14px;
+            height: 14px;
+            stroke: var(--choc-dark);
+            transition: stroke 0.4s;
+        }
+
+        .faq-item.active .faq-icon svg {
+            stroke: #fff;
+        }
+
+        .faq-answer {
+            max-height: 0;
+            overflow: hidden;
+            transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .faq-item.active .faq-answer {
+            max-height: 300px;
+            padding-top: 1.5rem;
+        }
+
+        .faq-answer p {
+            font-size: 1.1rem;
+            line-height: 1.8;
+            opacity: 0.7;
+            max-width: 600px;
+        }
+
+        /* ---- ANNOTATED NOTE ---- */
+        .archive-note {
+            background: #fff8eb;
+            padding: 2.5rem;
+            border-radius: 0.5rem;
+            box-shadow: 2px 5px 15px rgba(0,0,0,0.05);
+            transform: rotate(-1deg);
+            max-width: 300px;
+            position: relative;
+            margin: 5rem auto;
+            border: 1px solid rgba(201, 153, 58, 0.1);
+        }
+
+        .archive-note::before {
+            content: '';
+            position: absolute;
+            top: -10px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 80px;
+            height: 25px;
+            background: rgba(201, 153, 58, 0.2);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+
+        .archive-note p {
+            font-family: 'Cormorant Garamond', serif;
+            font-style: italic;
+            font-size: 1.2rem;
+            line-height: 1.4;
+            color: var(--archive-accent);
         }
     </style>
 </head>
 
 <body>
+
+    <canvas id="faq-canvas"></canvas>
 
     <!-- LOADER -->
     <div id="loader">
@@ -46,7 +203,7 @@
             <div class="loader-line">
                 <div class="loader-progress"></div>
             </div>
-            <span class="loader-hint">Melting the finest cocoa...</span>
+            <span class="loader-hint">Cataloging knowledge...</span>
         </div>
     </div>
 
@@ -58,7 +215,8 @@
         <div class="nav-links">
             <a href="/about" class="nav-link">Our Story</a>
             <a href="/shop" class="nav-link">Shop</a>
-            <a href="/faq" class="nav-link">FAQ</a>
+            <a href="/inspiration" class="nav-link">Inspiration</a>
+            <a href="/faq" class="nav-link active" style="color: var(--archive-accent);">FAQ</a>
         </div>
         <div class="nav-right">
             <a href="https://www.instagram.com/soulfulbitesofficial/" target="_blank" rel="noopener noreferrer"
@@ -66,89 +224,125 @@
         </div>
     </nav>
 
-    <main class="content-pg">
-        <div class="container">
-            <header class="hero-small">
-                <span class="label-tag">Common Questions</span>
-                <h1>FAQ</h1>
-            </header>
+    <main>
+        <header class="archive-hero">
+            <div class="recipe-eyebrow">The Soulfull Archive</div>
+            <h1>Archive of Intent</h1>
+            <p>Every bite is a question answered. Here are the most fundamental ones we've encountered.</p>
+        </header>
 
-            <div class="faq-list">
+        <section class="faq-accordion">
+            
+            <div class="faq-section">
+                <h2 class="faq-section-title">The Foundation</h2>
+                
                 <div class="faq-item">
-                    <h3>Do you ship internationally?</h3>
-                    <p>Currently, we ship within India only. We are working hard to bring SoulfullBites to a global
-                        audience.</p>
+                    <div class="faq-question">
+                        <h3>Do you ship internationally?</h3>
+                        <div class="faq-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                        </div>
+                    </div>
+                    <div class="faq-answer">
+                        <p>Currently, we ship within India only. Each bar is packed with thermal protection to ensure it arrives with its soul intact, even in mountain heat.</p>
+                    </div>
                 </div>
+
                 <div class="faq-item">
-                    <h3>Is your chocolate vegan?</h3>
-                    <p>Our "Dark & Bold" bar is 100% vegan. Our "Milk & Velvet" and "White & Rose" contain high-quality
-                        grass-fed dairy.</p>
-                </div>
-                <div class="faq-item">
-                    <h3>How should I store my bars?</h3>
-                    <p>We recommend storing them in a cool, dry place between 16°C and 20°C. Avoid refrigeration if
-                        possible, as it can dull the flavor profile.</p>
-                </div>
-                <div class="faq-item">
-                    <h3>Are your ingredients organic?</h3>
-                    <p>Yes, we use certified organic cacao, unrefined sugars, and natural flavorings. No additives or
-                        preservatives ever.</p>
+                    <div class="faq-question">
+                        <h3>Is your chocolate vegan?</h3>
+                        <div class="faq-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                        </div>
+                    </div>
+                    <div class="faq-answer">
+                        <p>Our "Dark & Bold" bar is 100% vegan. Our "Milk & Velvet" and "White & Rose" contain high-quality grass-fed dairy from local mountain farms.</p>
+                    </div>
                 </div>
             </div>
+
+            <div class="archive-note">
+                <p>"The best way to eat chocolate is with the eyes closed, and the mind open." — Anonymous Alchemist</p>
+            </div>
+
+            <div class="faq-section">
+                <h2 class="faq-section-title">Preparation & Care</h2>
+
+                <div class="faq-item">
+                    <div class="faq-question">
+                        <h3>How should I store my bars?</h3>
+                        <div class="faq-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                        </div>
+                    </div>
+                    <div class="faq-answer">
+                        <p>We recommend a cool, dry library. Between 16°C and 20°C is perfect. Avoid the fridge—extreme cold "shocks" the cocoa butter and mutes the story within.</p>
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-question">
+                        <h3>Are your ingredients organic?</h3>
+                        <div class="faq-icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                        </div>
+                    </div>
+                    <div class="faq-answer">
+                        <p>Absolutely. We use certified organic cacao from ethical estates, unrefined organic sugars, and botanicals we'd be proud to grow ourselves.</p>
+                    </div>
+                </div>
+            </div>
+
+        </section>
+
+        <div style="text-align: center; padding-bottom: 10rem;">
+            <p style="opacity: 0.5; margin-bottom: 2rem;">Still curious?</p>
+            <a href="mailto:hello@soulfullbites.com" class="nav-insta" style="display: inline-block; padding: 1.2rem 3rem;">Connect with us ↗</a>
         </div>
+
     </main>
 
     <!-- FOOTER -->
-    <footer
-        style="background: var(--choc-dark); color: var(--cream); padding: 5rem 5% 2rem; position: relative; z-index: 20;">
-        <div class="container">
-            <div
-                style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 4rem; border-bottom: 1px solid rgba(253, 246, 238, 0.1); padding-bottom: 4rem; margin-bottom: 2rem;">
+    <footer style="background: var(--choc-dark); color: var(--cream); padding: 5rem 5% 2rem; position: relative; z-index: 20;">
+        <div class="container" style="max-width: 1100px; margin: 0 auto; padding: 0 5%;">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 4rem; border-bottom: 1px solid rgba(253, 246, 238, 0.1); padding-bottom: 4rem; margin-bottom: 2rem;">
                 <div>
-                    <h3
-                        style="color: var(--cream); margin-bottom: 1.5rem; font-family: 'Cormorant Garamond', serif; font-size: 1.8rem;">
-                        SoulfullBites</h3>
-                    <p style="opacity: 0.7; font-size: 0.9rem; line-height: 1.6;">Small-batch handmade chocolates
-                        crafted with soul and intention in our mountain kitchen.</p>
+                    <h3 style="color: var(--cream); margin-bottom: 1.5rem; font-family: 'Cormorant Garamond', serif; font-size: 1.8rem;">SoulfullBites</h3>
+                    <p style="opacity: 0.7; font-size: 0.9rem; line-height: 1.6;">Small-batch handmade chocolates crafted with soul and intention in our mountain kitchen.</p>
                 </div>
                 <div>
-                    <h4
-                        style="margin-bottom: 1.2rem; font-size: 0.8rem; letter-spacing: 0.2rem; text-transform: uppercase;">
-                        Discover</h4>
-                    <ul style="list-style: none; display: flex; flex-direction: column; gap: 0.8rem;">
-                        <li><a href="/"
-                                style="color: inherit; text-decoration: none; opacity: 0.7; font-size: 0.9rem;">Home</a>
-                        </li>
-                        <li><a href="/about"
-                                style="color: inherit; text-decoration: none; opacity: 0.7; font-size: 0.9rem;">Our
-                                Story</a></li>
-                        <li><a href="/shop"
-                                style="color: inherit; text-decoration: none; opacity: 0.7; font-size: 0.9rem;">Shop</a>
-                        </li>
-                        <li><a href="/faq"
-                                style="color: inherit; text-decoration: none; opacity: 0.7; font-size: 0.9rem;">FAQ</a>
-                        </li>
+                    <h4 style="margin-bottom: 1.2rem; font-size: 0.8rem; letter-spacing: 0.2rem; text-transform: uppercase;">Discover</h4>
+                    <ul style="list-style: none; display: flex; flex-direction: column; gap: 0.8rem; padding: 0;">
+                        <li><a href="/" style="color: inherit; text-decoration: none; opacity: 0.7; font-size: 0.9rem;">Home</a></li>
+                        <li><a href="/about" style="color: inherit; text-decoration: none; opacity: 0.7; font-size: 0.9rem;">Our Story</a></li>
+                        <li><a href="/shop" style="color: inherit; text-decoration: none; opacity: 0.7; font-size: 0.9rem;">Shop</a></li>
+                        <li><a href="/inspiration" style="color: inherit; text-decoration: none; opacity: 0.7; font-size: 0.9rem;">Inspiration</a></li>
+                        <li><a href="/faq" style="color: inherit; text-decoration: none; opacity: 0.7; font-size: 0.9rem;">FAQ</a></li>
                     </ul>
                 </div>
                 <div>
-                    <h4
-                        style="margin-bottom: 1.2rem; font-size: 0.8rem; letter-spacing: 0.2rem; text-transform: uppercase;">
-                        Follow Us</h4>
-                    <a href="https://www.instagram.com/soulfulbitesofficial/" target="_blank" rel="noopener noreferrer"
-                        style="color: inherit; text-decoration: none; opacity: 0.7; font-size: 0.9rem;">Instagram ↗</a>
+                    <h4 style="margin-bottom: 1.2rem; font-size: 0.8rem; letter-spacing: 0.2rem; text-transform: uppercase;">Follow Us</h4>
+                    <a href="https://www.instagram.com/soulfulbitesofficial/" target="_blank" rel="noopener noreferrer" style="color: inherit; text-decoration: none; opacity: 0.7; font-size: 0.9rem;">Instagram ↗</a>
                 </div>
             </div>
-            <div
-                style="display: flex; justify-content: space-between; align-items: center; opacity: 0.4; font-size: 0.7rem; letter-spacing: 0.1rem; text-transform: uppercase;">
+            <div style="display: flex; justify-content: space-between; align-items: center; opacity: 0.4; font-size: 0.7rem; letter-spacing: 0.1rem; text-transform: uppercase;">
                 <p>&copy; 2026 SoulfullBites.</p>
                 <p>Made with &hearts; in the Mountains.</p>
-                <a href="https://ashutosh-ahirwal.vercel.app/" target="_blank" rel="noopener noreferrer"
-                    style="color: inherit; text-decoration: none; opacity: 0.7; font-size: 0.9rem;">Ashutosh Ahirwal</a>
+                <a href="https://ashutosh-ahirwal.vercel.app/" target="_blank" rel="noopener noreferrer" style="color: inherit; text-decoration: none;">Ashutosh Ahirwal</a>
             </div>
         </div>
     </footer>
 
     <script type="module" src="./main.js"></script>
+    <script>
+        document.querySelectorAll('.faq-item').forEach(item => {
+            item.addEventListener('click', () => {
+                const isActive = item.classList.contains('active');
+                document.querySelectorAll('.faq-item').forEach(other => other.classList.remove('active'));
+                if (!isActive) item.classList.add('active');
+            });
+        });
+    </script>
 </body>
 
 </html>

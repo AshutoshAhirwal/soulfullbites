@@ -74,6 +74,26 @@ window.addEventListener('load', async () => {
     return;
   }
 
+  if (document.querySelector('#about-canvas')) {
+    const { startAboutExperience } = await import('./about-scene.js');
+    startAboutExperience();
+  }
+
+  if (document.querySelector('#inspiration-canvas')) {
+    const { startInspirationExperience } = await import('./inspiration-scene.js');
+    startInspirationExperience();
+  }
+
+  if (document.querySelector('#recipe-canvas')) {
+    const { startRecipeExperience } = await import('./recipe-scene.js');
+    startRecipeExperience();
+  }
+
+  if (document.querySelector('#faq-canvas')) {
+    const { startFAQExperience } = await import('./faq-scene.js');
+    startFAQExperience();
+  }
+
   runBasicLoader();
 });
 

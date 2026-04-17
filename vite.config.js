@@ -98,6 +98,7 @@ export default defineConfig(({ mode }) => {
           shop: path.resolve(process.cwd(), 'shop.html'),
           checkout: path.resolve(process.cwd(), 'checkout.html'),
           admin: path.resolve(process.cwd(), 'admin.html'),
+          inspiration: path.resolve(process.cwd(), 'inspiration.html'),
         },
       },
     },

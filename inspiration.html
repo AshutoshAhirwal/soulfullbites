@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inspiration | SoulfullBites</title>
+    <meta name="description" content="Explore the SoulfullBites Codex — an immersive gallery of artisanal rituals and chocolate inspiration.">
+    <link rel="icon" type="image/png" href="/assets/logo.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,400&family=Outfit:wght@200;400;600&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="./style.css">
+
+    <style>
+        :root {
+            --codex-dark: #1a0f08;
+            --codex-accent: #c9993a;
+        }
+
+        .inspo-page-body {
+            background: var(--codex-dark);
+            color: var(--cream);
+            overflow-x: hidden;
+        }
+
+        #inspiration-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
+            opacity: 0.4;
+        }
+
+        /* ---- DISCOVERY LIST ---- */
+        #inspo-discovery-list {
+            position: relative;
+            z-index: 10;
+            padding: 15vh 5% 10vh;
+        }
+
+        .discovery-item {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            margin-bottom: 15vh;
+        }
+
+        .discovery-item:nth-child(even) {
+            flex-direction: row-reverse;
+        }
+
+        /* ---- CINEMATIC CONTENT ---- */
+        .discovery-content {
+            flex: 0 0 45%;
+            padding: 4rem;
+            z-index: 2;
+            opacity: 0;
+            transform: translateY(50px);
+            transition: all 1.2s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .discovery-item.visible .discovery-content {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .discovery-content h2 {
+            font-family: 'Playfair Display', serif;
+            font-size: clamp(4rem, 10vw, 8rem);
+            color: var(--cream);
+            line-height: 0.85;
+            margin-bottom: 2rem;
+            font-style: italic;
+        }
+
+        .discovery-content h2 em {
+            display: block;
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 0.4em;
+            letter-spacing: 0.5rem;
+            text-transform: uppercase;
+            color: var(--codex-accent);
+            font-style: normal;
+            margin-bottom: 1rem;
+        }
+
+        .discovery-content p {
+            font-size: 1.2rem;
+            line-height: 1.8;
+            max-width: 450px;
+            opacity: 0.7;
+        }
+
+        /* ---- FLOATING VISUAL ---- */
+        .discovery-visual {
+            flex: 0 0 50%;
+            height: 70vh;
+            position: relative;
+            overflow: hidden;
+            border-radius: 2rem;
+            box-shadow: 0 50px 100px rgba(0,0,0,0.5);
+            opacity: 0;
+            transform: scale(0.9) rotate(3deg);
+            transition: all 1.5s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .discovery-item.visible .discovery-visual {
+            opacity: 1;
+            transform: scale(1) rotate(0deg);
+        }
+
+        .discovery-visual img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 2s ease;
+        }
+
+        .discovery-item:hover .discovery-visual img {
+            transform: scale(1.1);
+        }
+
+        /* ---- SCROLL PROGRESS BAR ---- */
+        .scroll-progress-container {
+            position: fixed;
+            left: 3rem;
+            top: 50%;
+            transform: translateY(-50%);
+            height: 40vh;
+            width: 2px;
+            background: rgba(255,255,255,0.1);
+            z-index: 100;
+        }
+
+        .scroll-progress-bar {
+            width: 100%;
+            background: var(--codex-accent);
+            height: 0%;
+            transition: height 0.1s linear;
+        }
+
+        /* ---- NAVIGATION DOTS ---- */
+        .discovery-nav {
+            position: fixed;
+            right: 4rem;
+            top: 50%;
+            transform: translateY(-50%);
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+            z-index: 100;
+        }
+
+        .discovery-dot {
+            width: 40px;
+            height: 1px;
+            background: rgba(255,255,255,0.2);
+            transition: all 0.4s;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .discovery-dot::after {
+            content: attr(data-index);
+            position: absolute;
+            left: -3rem;
+            top: -0.5rem;
+            font-size: 0.7rem;
+            opacity: 0;
+            transition: opacity 0.4s;
+            font-family: 'Outfit', sans-serif;
+            color: var(--codex-accent);
+        }
+
+        .discovery-dot.active {
+            width: 80px;
+            background: var(--codex-accent);
+        }
+
+        .discovery-dot.active::after {
+            opacity: 1;
+        }
+
+        @media (max-width: 900px) {
+            .discovery-item, .discovery-item:nth-child(even) {
+                flex-direction: column;
+                padding: 10vh 5%;
+            }
+            .discovery-content, .discovery-visual {
+                flex: none;
+                width: 100%;
+                padding: 2rem 0;
+            }
+            .discovery-visual {
+                height: 50vh;
+            }
+            .discovery-nav, .scroll-progress-container {
+                display: none;
+            }
+        }
+    </style>
+</head>
+
+<body class="inspo-page-body">
+
+    <canvas id="inspiration-canvas"></canvas>
+
+    <!-- LOADER -->
+    <div id="loader">
+        <div class="loader-inner">
+            <span class="loader-brand">SoulfullBites</span>
+            <div class="loader-line">
+                <div class="loader-progress"></div>
+            </div>
+            <span class="loader-hint">Unveiling the codex...</span>
+        </div>
+    </div>
+
+    <!-- NAV -->
+    <nav id="main-nav">
+        <div class="nav-left">
+            <a href="/" class="nav-brand" style="color: var(--cream);">SoulfullBites</a>
+        </div>
+        <div class="nav-links">
+            <a href="/about" class="nav-link" style="color: var(--cream);">Our Story</a>
+            <a href="/shop" class="nav-link" style="color: var(--cream);">Shop</a>
+            <a href="/inspiration" class="nav-link active" style="color: var(--codex-accent);">Inspiration</a>
+            <a href="/faq" class="nav-link" style="color: var(--cream);">FAQ</a>
+        </div>
+        <div class="nav-right">
+            <a href="https://www.instagram.com/soulfulbitesofficial/" target="_blank" rel="noopener noreferrer"
+                class="nav-insta" style="color: var(--codex-accent); border-color: var(--codex-accent);">Instagram ↗</a>
+        </div>
+    </nav>
+
+    <div class="scroll-progress-container">
+        <div class="scroll-progress-bar" id="progress-bar"></div>
+    </div>
+
+    <div class="discovery-nav" id="discovery-nav">
+        <div class="discovery-dot" data-index="01"></div>
+        <div class="discovery-dot" data-index="02"></div>
+        <div class="discovery-dot" data-index="03"></div>
+        <div class="discovery-dot" data-index="04"></div>
+    </div>
+
+    <main id="inspo-discovery-list">
+        <!-- HERO ENTRY -->
+        <section class="discovery-item" id="entry-0">
+            <div class="discovery-content" style="text-align: center; flex: 0 0 100%;">
+                <span style="font-size: 0.7rem; letter-spacing: 0.6rem; text-transform: uppercase; color: var(--codex-accent); display: block; margin-bottom: 2rem;">Volume 01</span>
+                <h1 style="font-family: 'Playfair Display', serif; font-size: clamp(4rem, 15vw, 12rem); color: var(--cream); font-style: italic; line-height: 0.8;">The<br>Codex</h1>
+                <p style="margin: 3rem auto; font-size: 1.4rem;">A curated selection of artisanal rituals, mountain recipes, and soulful chocolate moments.</p>
+                <div style="margin-top: 4rem; animation: float 2s infinite ease-in-out;">
+                    <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="var(--codex-accent)" stroke-width="1.5">
+                        <path d="M7 13l5 5 5-5M7 6l5 5 5-5"/>
+                    </svg>
+                </div>
+            </div>
+        </section>
+
+        <!-- RITUAL 01 -->
+        <section class="discovery-item" id="item-1">
+            <div class="discovery-content">
+                <h2><em>Ritual 01</em>Slow<br>Mornings</h2>
+                <p>Begin your day with a square of 72% dark chocolate and a moment of silence. Let the complexity of the beans awaken your senses before the world rushes in.</p>
+                <a href="#" style="display: inline-block; margin-top: 3rem; color: var(--codex-accent); text-decoration: none; font-size: 0.8rem; letter-spacing: 0.3rem; text-transform: uppercase; font-weight: 600;">Full Ritual ↗</a>
+            </div>
+            <div class="discovery-visual">
+                <img src="/assets/inspiration_cupcakes.png" alt="Morning Ritual">
+            </div>
+        </section>
+
+        <!-- RECIPE 02 -->
+        <section class="discovery-item" id="item-2">
+            <div class="discovery-content">
+                <h2><em>Recipe 02</em>Mountain<br>Ganache</h2>
+                <p>Infuse your chocolate with local wild lavender and sea salt. A recipe crafted in the height of the mountain spring, designed for deep reflection.</p>
+                <a href="/recipe-mountain-ganache.html" style="display: inline-block; margin-top: 3rem; color: var(--codex-accent); text-decoration: none; font-size: 0.8rem; letter-spacing: 0.3rem; text-transform: uppercase; font-weight: 600;">Recipe Details ↗</a>
+            </div>
+            <div class="discovery-visual">
+                <img src="/assets/inspiration_heart.png" alt="Mountain Ganache">
+            </div>
+        </section>
+
+        <!-- GIFTING 03 -->
+        <section class="discovery-item" id="item-3">
+            <div class="discovery-content">
+                <h2><em>Gifting 03</em>The Star<br>Table</h2>
+                <p>Transform a simple dinner into a celestial celebration. Hand-wrapped bars and scattered cocoa nibs create a landscape of shared intention.</p>
+                <a href="#" style="display: inline-block; margin-top: 3rem; color: var(--codex-accent); text-decoration: none; font-size: 0.8rem; letter-spacing: 0.3rem; text-transform: uppercase; font-weight: 600;">Styling Guide ↗</a>
+            </div>
+            <div class="discovery-visual">
+                <img src="/assets/inspiration_star.png" alt="Star Table Setting">
+            </div>
+        </section>
+
+        <!-- FINAL CTA -->
+        <section class="discovery-item" id="item-4" style="min-height: 80vh;">
+            <div class="discovery-content" style="text-align: center; flex: 0 0 100%;">
+                <h2 style="font-size: clamp(3rem, 10vw, 6rem);">Write your own<br><em>Chapter.</em></h2>
+                <a href="/shop" style="display: inline-block; margin-top: 4rem; padding: 1.5rem 4rem; background: var(--codex-accent); color: var(--codex-dark); text-decoration: none; border-radius: 4rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.2rem; transition: transform 0.3s;">Shop the Collection</a>
+            </div>
+        </section>
+    </main>
+
+    <!-- FOOTER -->
+    <footer style="background: var(--choc-dark); color: var(--cream); padding: 5rem 5% 2rem; position: relative; z-index: 20;">
+        <div class="container" style="max-width: 1100px; margin: 0 auto; padding: 0 5%;">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 4rem; border-bottom: 1px solid rgba(253, 246, 238, 0.1); padding-bottom: 4rem; margin-bottom: 2rem;">
+                <div>
+                    <h3 style="color: var(--cream); margin-bottom: 1.5rem; font-family: 'Cormorant Garamond', serif; font-size: 1.8rem;">SoulfullBites</h3>
+                    <p style="opacity: 0.7; font-size: 0.9rem; line-height: 1.6;">Small-batch handmade chocolates crafted with soul and intention in our mountain kitchen.</p>
+                </div>
+                <div>
+                    <h4 style="margin-bottom: 1.2rem; font-size: 0.8rem; letter-spacing: 0.2rem; text-transform: uppercase;">Discover</h4>
+                    <ul style="list-style: none; display: flex; flex-direction: column; gap: 0.8rem; padding: 0;">
+                        <li><a href="/" style="color: inherit; text-decoration: none; opacity: 0.7; font-size: 0.9rem;">Home</a></li>
+                        <li><a href="/about" style="color: inherit; text-decoration: none; opacity: 0.7; font-size: 0.9rem;">Our Story</a></li>
+                        <li><a href="/shop" style="color: inherit; text-decoration: none; opacity: 0.7; font-size: 0.9rem;">Shop</a></li>
+                        <li><a href="/inspiration" style="color: inherit; text-decoration: none; opacity: 0.7; font-size: 0.9rem;">Inspiration</a></li>
+                        <li><a href="/faq" style="color: inherit; text-decoration: none; opacity: 0.7; font-size: 0.9rem;">FAQ</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 style="margin-bottom: 1.2rem; font-size: 0.8rem; letter-spacing: 0.2rem; text-transform: uppercase;">Follow Us</h4>
+                    <a href="https://www.instagram.com/soulfulbitesofficial/" target="_blank" rel="noopener noreferrer" style="color: inherit; text-decoration: none; opacity: 0.7; font-size: 0.9rem;">Instagram ↗</a>
+                </div>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; opacity: 0.4; font-size: 0.7rem; letter-spacing: 0.1rem; text-transform: uppercase;">
+                <p>&copy; 2026 SoulfullBites.</p>
+                <p>Made with &hearts; in the Mountains.</p>
+                <a href="https://ashutosh-ahirwal.vercel.app/" target="_blank" rel="noopener noreferrer" style="color: inherit; text-decoration: none;">Ashutosh Ahirwal</a>
+            </div>
+        </div>
+    </footer>
+
+    <script type="module" src="./main.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/ScrollTrigger.min.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            gsap.registerPlugin(ScrollTrigger);
+
+            const items = document.querySelectorAll('.discovery-item');
+            const dots = document.querySelectorAll('.discovery-dot');
+            const progress = document.getElementById('progress-bar');
+
+            // Scroll Progress
+            gsap.to(progress, {
+                height: '100%',
+                scrollTrigger: {
+                    trigger: '#inspo-discovery-list',
+                    start: 'top top',
+                    end: 'bottom bottom',
+                    scrub: true
+                }
+            });
+
+            // Intersection Observer for visibility
+            items.forEach((item, index) => {
+                ScrollTrigger.create({
+                    trigger: item,
+                    start: 'top 60%',
+                    onEnter: () => {
+                        item.classList.add('visible');
+                        updateDots(index);
+                    },
+                    onEnterBack: () => updateDots(index)
+                });
+            });
+
+            function updateDots(index) {
+                dots.forEach((dot, i) => {
+                    dot.classList.toggle('active', i === index);
+                });
+            }
+
+            // Click on dots to scroll
+            dots.forEach((dot, i) => {
+                dot.addEventListener('click', () => {
+                    gsap.to(window, {
+                        scrollTo: items[i],
+                        duration: 1.5,
+                        ease: 'power4.inOut'
+                    });
+                });
+            });
+        });
+    </script>
+
+</body>
+</html>
