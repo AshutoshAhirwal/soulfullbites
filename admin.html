@@ -50,22 +50,46 @@
                     </div>
                 </div>
 
+                <div class="admin-tabs" id="admin-tabs">
+                    <button class="admin-tab active" data-status="all">All Orders</button>
+                    <button class="admin-tab" data-status="new">Pending</button>
+                    <button class="admin-tab" data-status="confirmed">Confirmed</button>
+                    <button class="admin-tab" data-status="preparing">Preparing</button>
+                    <button class="admin-tab" data-status="delivered">Delivered</button>
+                </div>
+
                 <div class="admin-filters">
-                    <label class="admin-field">
-                        <span>Search</span>
-                        <input id="admin-search" type="search" placeholder="Search by name, email, phone or order id">
-                    </label>
-                    <label class="admin-field admin-field-small">
-                        <span>Status</span>
-                        <select id="admin-status-filter">
-                            <option value="all">All</option>
-                            <option value="new">New</option>
-                            <option value="confirmed">Confirmed</option>
-                            <option value="preparing">Preparing</option>
-                            <option value="delivered">Delivered</option>
-                            <option value="cancelled">Cancelled</option>
-                        </select>
-                    </label>
+                    <div class="admin-search-wrap">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                        <input id="admin-search" type="search" placeholder="Search by customer, email, or order ID...">
+                    </div>
+                </div>
+
+                <div class="admin-toolbar-row">
+                    <div class="admin-filters-group">
+                        <label class="admin-field">
+                            <span>Payment</span>
+                            <select id="admin-payment-filter">
+                                <option value="all">All Payments</option>
+                                <option value="paid">Paid</option>
+                                <option value="unpaid">Unpaid</option>
+                            </select>
+                        </label>
+
+                        <label class="admin-field">
+                            <span>Sort By</span>
+                            <select id="admin-sort-filter">
+                                <option value="created_at:desc">Newest First</option>
+                                <option value="created_at:asc">Oldest First</option>
+                                <option value="total_amount:desc">Highest Value</option>
+                            </select>
+                        </label>
+
+                        <button type="button" id="admin-export-csv" class="admin-secondary-btn" style="height: 44px; margin-top: auto;">
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                            Export
+                        </button>
+                    </div>
                 </div>
 
                 <div id="admin-stats" class="admin-stats"></div>
@@ -76,6 +100,6 @@
         </section>
     </main>
 
-    <script type="module" src="./admin.js"></script>
+    <script type="module" src="./admin-dashboard.js"></script>
 </body>
 </html>

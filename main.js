@@ -340,14 +340,16 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     if (button) {
-      button.textContent = 'Saving Order...';
+      button.textContent = 'Preparing Payment...';
       button.disabled = true;
     }
-    setFormMessage(orderForm, 'Saving your order...');
+    setFormMessage(orderForm, 'Setting up secure payment...');
 
     try {
       const formData = new FormData(orderForm);
-      const payload = await requestJson(API_URL, {
+      
+      // 1. Create Razorpay Order
+      const resData = await requestJson('/api/create-razorpay-order', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -357,37 +359,86 @@ document.addEventListener('DOMContentLoaded', () => {
         }),
       });
 
-      const history = getStoredJson(HISTORY_STORAGE_KEY, []);
-      history.unshift({
-        id: payload.orderId || `local-${Date.now()}`,
-        date: new Date().toLocaleDateString(),
-        items: bag,
-        total,
-        status: 'new',
-      });
-      localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(history.slice(0, 5)));
-      localStorage.removeItem(BAG_STORAGE_KEY);
+      // 2. Open Razorpay Checkout
+      const options = {
+        key: resData.keyId,
+        amount: resData.amount,
+        currency: resData.currency,
+        name: "SoulfullBites",
+        description: "Artisanal Chocolate Order",
+        order_id: resData.razorpayOrderId,
+        handler: async function (response) {
+          if (button) button.textContent = 'Verifying Payment...';
+          setFormMessage(orderForm, 'Verifying payment status...');
 
-      if (button) {
-        button.textContent = 'Order Saved';
-      }
+          try {
+            // 3. Verify Payment
+            const verifyRes = await requestJson('/api/verify-payment', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                order_id: resData.orderId,
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+              }),
+            });
 
-      setFormMessage(
-        orderForm,
-        payload.message || 'Order received successfully.',
-        payload.customerEmailSkipped ? 'warning' : 'success',
-      );
+            // 4. Success Tasks
+            const history = getStoredJson(HISTORY_STORAGE_KEY, []);
+            history.unshift({
+              id: verifyRes.order.id,
+              date: new Date().toLocaleDateString(),
+              items: bag,
+              total,
+              status: 'paid',
+            });
+            localStorage.setItem(HISTORY_STORAGE_KEY, JSON.stringify(history.slice(0, 5)));
+            localStorage.removeItem(BAG_STORAGE_KEY);
 
-      setTimeout(() => {
-        window.location.href = '/shop';
-      }, 1800);
+            if (button) button.textContent = 'Payment Received';
+            setFormMessage(orderForm, 'Payment successful! Redirecting...', 'success');
+
+            setTimeout(() => {
+              window.location.href = '/shop';
+            }, 2000);
+          } catch (err) {
+            console.error('Verification Error:', err);
+            setFormMessage(orderForm, 'Payment recorded but verification failed. Our team will contact you.', 'warning');
+            if (button) {
+              button.textContent = 'Contact Support';
+              button.disabled = false;
+            }
+          }
+        },
+        prefill: {
+          name: name,
+          email: email,
+          contact: phone
+        },
+        theme: {
+          color: "#4a2c1a"
+        },
+        modal: {
+          ondismiss: function() {
+            if (button) {
+              button.textContent = 'Pay Now & Confirm Order';
+              button.disabled = false;
+            }
+            setFormMessage(orderForm, 'Payment cancelled.', 'info');
+          }
+        }
+      };
+
+      const rzp = new window.Razorpay(options);
+      rzp.open();
     } catch (error) {
       console.error('Order Error:', error);
       if (button) {
         button.textContent = 'Try Again';
         button.disabled = false;
       }
-      setFormMessage(orderForm, error.message || 'Unable to place your order right now.', 'error');
+      setFormMessage(orderForm, error.message || 'Unable to initiate payment right now.', 'error');
     }
   });
 });
@@ -444,5 +495,119 @@ document.addEventListener('DOMContentLoaded', () => {
 
     localStorage.setItem(BAG_STORAGE_KEY, JSON.stringify(order.items));
     window.location.href = '/checkout';
+  });
+});
+
+// --- REVIEWS LOGIC ---
+document.addEventListener('DOMContentLoaded', () => {
+  const reviewsContainer = document.getElementById('reviews-container');
+  const openFormBtn = document.getElementById('open-review-form');
+  const modal = document.getElementById('review-modal');
+  const closeModalBtn = document.getElementById('close-review-modal');
+  const reviewForm = document.getElementById('review-form');
+  const stars = document.querySelectorAll('.star');
+  let selectedRating = 0;
+
+  if (!reviewsContainer) return;
+
+  const loadReviews = async () => {
+    try {
+      const data = await requestJson('/api/reviews');
+      if (data.reviews && data.reviews.length > 0) {
+        reviewsContainer.innerHTML = data.reviews.map((r, i) => `
+          <article class="review-card" style="animation-delay: ${i * 0.1}s">
+            <div style="display: flex; justify-content: space-between; align-items: start;">
+              <div>
+                <h4>${r.customer_name}</h4>
+                <div class="review-stars">${'★'.repeat(r.rating)}${'☆'.repeat(5-r.rating)}</div>
+              </div>
+              ${r.is_verified ? '<span class="verified-buyer-tag">Verified Buyer</span>' : ''}
+            </div>
+            <p class="review-content">"${r.comment}"</p>
+            <span class="review-date">${new Date(r.created_at).toLocaleDateString('en-IN', { month: 'long', year: 'numeric' })}</span>
+          </article>
+        `).join('');
+      }
+    } catch (err) {
+      console.error('Failed to load reviews:', err);
+    }
+  };
+
+  loadReviews();
+
+  // Modal toggle
+  openFormBtn?.addEventListener('click', () => {
+    modal.style.display = 'flex';
+  });
+
+  closeModalBtn?.addEventListener('click', () => {
+    modal.style.display = 'none';
+  });
+
+  // Star logic
+  stars.forEach(star => {
+    star.addEventListener('mouseover', () => {
+      const val = parseInt(star.dataset.value);
+      stars.forEach(s => s.style.color = parseInt(s.dataset.value) <= val ? 'var(--gold)' : '#ddd');
+    });
+
+    star.addEventListener('mouseout', () => {
+      stars.forEach(s => s.style.color = parseInt(s.dataset.value) <= selectedRating ? 'var(--gold)' : '#ddd');
+    });
+
+    star.addEventListener('click', () => {
+      selectedRating = parseInt(star.dataset.value);
+    });
+  });
+
+  // Form submission
+  reviewForm?.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    if (selectedRating === 0) {
+      alert('Please select a rating');
+      return;
+    }
+
+    const submitBtn = reviewForm.querySelector('button');
+    const msg = document.getElementById('review-msg');
+    
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Verifying & Submitting...';
+
+    try {
+      await requestJson('/api/reviews', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          orderId: document.getElementById('review-order-id').value,
+          customerName: document.getElementById('review-name').value,
+          rating: selectedRating,
+          comment: document.getElementById('review-comment').value
+        })
+      });
+
+      msg.textContent = 'Review submitted! Thank you for your feedback.';
+      msg.style.color = 'green';
+      reviewForm.reset();
+      selectedRating = 0;
+      stars.forEach(s => s.style.color = '#ddd');
+      
+      setTimeout(() => {
+        modal.style.display = 'none';
+        loadReviews();
+        msg.textContent = '';
+      }, 2000);
+    } catch (err) {
+      msg.textContent = err.message || 'Submission failed. Please check your Order ID.';
+      msg.style.color = 'red';
+    } finally {
+      submitBtn.disabled = false;
+      submitBtn.textContent = 'Submit Verified Review';
+    }
+  });
+
+  // Allow closing modal on outside click
+  window.addEventListener('click', (e) => {
+    if (e.target === modal) modal.style.display = 'none';
   });
 });

@@ -15,7 +15,10 @@ export default async function handler(req, res) {
     const url = getRequestUrl(req);
     const search = url.searchParams.get('search') || '';
     const status = url.searchParams.get('status') || 'all';
-    const orders = await listOrders({ search, status });
+    const paymentStatus = url.searchParams.get('paymentStatus') || 'all';
+    const sort = url.searchParams.get('sort') || 'created_at:desc';
+
+    const orders = await listOrders({ search, status, paymentStatus, sort });
 
     return json(res, 200, { success: true, orders });
   } catch (error) {

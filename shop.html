@@ -112,6 +112,26 @@
             </div>
         </div>
 
+        <!-- REVIEWS SECTION -->
+        <section id="reviews-section" style="margin-top: 8rem; border-top: 1px solid rgba(74, 44, 26, 0.08); padding-top: 6rem;">
+            <div class="container">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4rem;">
+                    <div>
+                        <span class="label-tag">Testimonials</span>
+                        <h2 style="font-size: 3rem; font-family: 'Cormorant Garamond', serif;">Voice of the <em>Soul.</em></h2>
+                    </div>
+                    <button id="open-review-form" class="btn-buy" style="background: var(--choc-dark); border: none; padding: 1rem 2rem;">Write a Review</button>
+                </div>
+
+                <div id="reviews-container" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 2.5rem;">
+                    <!-- Reviews will be injected here -->
+                    <p style="text-align: center; grid-column: 1/-1; opacity: 0.5;">Be the first to share your experience...</p>
+                </div>
+            </div>
+        </section>
+
+        </div>
+
         <section id="recent-orders-section"
             style="margin-top: 6rem; background: #fffaf5; padding: 6rem 5%; display: none; border-top: 1px solid rgba(74, 44, 26, 0.05);">
             <div class="container">
@@ -178,6 +198,34 @@
             </div>
         </div>
     </footer>
+
+    <!-- REVIEW MODAL -->
+    <div id="review-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); z-index: 5000; backdrop-filter: blur(8px); align-items: center; justify-content: center;">
+        <div class="admin-card" style="width: 100%; max-width: 500px; padding: 3rem; background: #fff; position: relative; border-radius: 2.5rem;">
+            <button id="close-review-modal" style="position: absolute; top: 1.5rem; right: 1.5rem; background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #999;">✕</button>
+            <h3 style="font-size: 2rem; margin-bottom: 2rem; font-family: 'Cormorant Garamond', serif;">Share Your Experience</h3>
+            
+            <form id="review-form" style="display: flex; flex-direction: column; gap: 1.2rem;">
+                <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                    <span style="font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.1rem; color: var(--gold);">Rating</span>
+                    <div id="star-rating" style="display: flex; gap: 0.5rem; font-size: 1.5rem;">
+                        <span class="star" data-value="1" style="cursor: pointer; color: #ddd;">★</span>
+                        <span class="star" data-value="2" style="cursor: pointer; color: #ddd;">★</span>
+                        <span class="star" data-value="3" style="cursor: pointer; color: #ddd;">★</span>
+                        <span class="star" data-value="4" style="cursor: pointer; color: #ddd;">★</span>
+                        <span class="star" data-value="5" style="cursor: pointer; color: #ddd;">★</span>
+                    </div>
+                </div>
+
+                <input type="text" id="review-order-id" placeholder="Order ID (from your email)" required style="padding: 1rem; border-radius: 1rem; border: 1px solid #ddd;">
+                <input type="text" id="review-name" placeholder="Your Name" required style="padding: 1rem; border-radius: 1rem; border: 1px solid #ddd;">
+                <textarea id="review-comment" placeholder="Tell us about the flavor, texture, and your overall experience..." required style="padding: 1rem; border-radius: 1rem; border: 1px solid #ddd; height: 120px; resize: none;"></textarea>
+                
+                <button type="submit" class="btn-buy" style="width: 100%; padding: 1.2rem; background: var(--choc-dark); margin-top: 1rem;">Submit Verified Review</button>
+                <p id="review-msg" style="font-size: 0.85rem; text-align: center; margin-top: 0.5rem;"></p>
+            </form>
+        </div>
+    </div>
 
     <script type="module" src="./main.js"></script>
 </body>

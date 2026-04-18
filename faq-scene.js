@@ -122,4 +122,12 @@ class FAQScene {
 
 export function startFAQExperience() {
     new FAQScene();
+
+    const loader = document.getElementById('loader');
+    if (loader) {
+        setTimeout(() => {
+            loader.style.opacity = '0';
+            setTimeout(() => loader.style.display = 'none', 800);
+        }, 800);
+    }
 }

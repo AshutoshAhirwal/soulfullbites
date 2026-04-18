@@ -742,3 +742,91 @@ blockquote cite {
     .grid-2 { grid-template-columns: 1fr; gap: 2rem; }
     .nav-links { display: none; } /* Hide on mobile for simplicity, or add hamburger */
 }
+/* ---- REVIEWS & TESTIMONIALS ---- */
+.review-card {
+    background: rgba(255, 255, 255, 0.6);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(201, 153, 58, 0.15);
+    border-radius: 2rem;
+    padding: 3rem 2.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    position: relative;
+    transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: 0 10px 30px rgba(74, 44, 26, 0.03);
+    overflow: hidden;
+}
+
+.review-card::before {
+    content: '"';
+    position: absolute;
+    top: -1rem;
+    left: 1.5rem;
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 8rem;
+    color: var(--gold);
+    opacity: 0.08;
+    pointer-events: none;
+}
+
+.review-card:hover {
+    transform: translateY(-12px) scale(1.02);
+    box-shadow: 0 25px 60px rgba(74, 44, 26, 0.08);
+    border-color: var(--gold);
+    background: rgba(255, 255, 255, 0.85);
+}
+
+.review-card h4 {
+    font-size: 1.4rem;
+    color: var(--choc-dark);
+    font-weight: 400;
+}
+
+.review-stars {
+    display: flex;
+    gap: 0.3rem;
+    color: var(--gold);
+    font-size: 1rem;
+}
+
+.review-content {
+    font-family: 'Cormorant Garamond', serif;
+    font-size: 1.25rem;
+    line-height: 1.6;
+    color: var(--text-mid);
+    font-style: italic;
+    opacity: 0.9;
+}
+
+.verified-buyer-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.65rem;
+    background: linear-gradient(135deg, #e6f4ea, #d4edda);
+    color: #155724;
+    padding: 0.4rem 0.8rem;
+    border-radius: 2rem;
+    text-transform: uppercase;
+    font-weight: 600;
+    letter-spacing: 0.08rem;
+    border: 1px solid rgba(21, 87, 36, 0.1);
+}
+
+.review-date {
+    font-size: 0.75rem;
+    letter-spacing: 0.05rem;
+    color: var(--text-light);
+    text-transform: uppercase;
+    margin-top: auto;
+}
+
+@keyframes fadeInScale {
+    from { opacity: 0; transform: translateY(20px) scale(0.95); }
+    to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.review-card {
+    animation: fadeInScale 0.8s cubic-bezier(0.16, 1, 0.3, 1) both;
+}

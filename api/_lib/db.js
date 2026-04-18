@@ -56,8 +56,33 @@ export async function ensureOrdersTable() {
       total_display TEXT NOT NULL,
       customer_email_skipped BOOLEAN NOT NULL DEFAULT FALSE,
       admin_note TEXT NOT NULL DEFAULT '',
+      razorpay_order_id TEXT,
+      razorpay_payment_id TEXT,
+      razorpay_signature TEXT,
+      payment_status TEXT NOT NULL DEFAULT 'unpaid',
       created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
       updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `);
+
+  // Ensure new columns exist for existing tables
+  try {
+    await dbQuery('ALTER TABLE orders ADD COLUMN IF NOT EXISTS razorpay_order_id TEXT');
+    await dbQuery('ALTER TABLE orders ADD COLUMN IF NOT EXISTS razorpay_payment_id TEXT');
+    await dbQuery('ALTER TABLE orders ADD COLUMN IF NOT EXISTS razorpay_signature TEXT');
+    await dbQuery("ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_status TEXT NOT NULL DEFAULT 'unpaid'");
+  } catch (err) {
+    console.warn('Migration warning:', err.message);
+  }
+
+  await dbQuery(`
+    CREATE TABLE IF NOT EXISTS reviews (
+      id SERIAL PRIMARY KEY,
+      order_id TEXT REFERENCES orders(id),
+      customer_name TEXT NOT NULL,
+      rating INTEGER NOT NULL CHECK (rating >= 1 AND rating <= 5),
+      comment TEXT NOT NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     )
   `);
 

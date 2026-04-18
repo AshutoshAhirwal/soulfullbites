@@ -32,6 +32,9 @@ const normalizeOrder = (row) => ({
   totalDisplay: row.total_display,
   customerEmailSkipped: Boolean(row.customer_email_skipped),
   adminNote: row.admin_note || '',
+  paymentStatus: row.payment_status || 'unpaid',
+  razorpayOrderId: row.razorpay_order_id || '',
+  razorpayPaymentId: row.razorpay_payment_id || '',
   createdAt: row.created_at,
   updatedAt: row.updated_at,
 });
@@ -53,6 +56,8 @@ export function buildOrderRecord(payload) {
     items: orderLines,
     totalAmount: Number(payload.order_total_value || 0),
     totalDisplay: cleanText(payload.order_total),
+    razorpayOrderId: cleanText(payload.razorpay_order_id),
+    paymentStatus: cleanText(payload.payment_status) || 'unpaid',
   };
 }
 
@@ -77,10 +82,12 @@ export async function createOrder(order) {
       items_text,
       items_json,
       total_amount,
-      total_display
+      total_display,
+      razorpay_order_id,
+      payment_status
     )
     VALUES (
-      $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13
+      $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15
     )
     RETURNING *
   `, [
@@ -97,6 +104,8 @@ export async function createOrder(order) {
     JSON.stringify(order.items || []),
     order.totalAmount,
     order.totalDisplay,
+    order.razorpayOrderId,
+    order.paymentStatus,
   ]);
 
   return rows[0] ? normalizeOrder(rows[0]) : null;
@@ -119,7 +128,7 @@ export async function markOrderCustomerEmail(orderId, customerEmailSkipped) {
   return rows[0] ? normalizeOrder(rows[0]) : null;
 }
 
-export async function listOrders({ search = '', status = 'all' } = {}) {
+export async function listOrders({ search = '', status = 'all', paymentStatus = 'all', sort = 'created_at:desc' } = {}) {
   if (!hasDatabase()) {
     throw new Error('DATABASE_URL is not configured');
   }
@@ -134,6 +143,11 @@ export async function listOrders({ search = '', status = 'all' } = {}) {
     conditions.push(`status = $${values.length}`);
   }
 
+  if (cleanText(paymentStatus) && cleanText(paymentStatus) !== 'all') {
+    values.push(cleanText(paymentStatus));
+    conditions.push(`payment_status = $${values.length}`);
+  }
+
   if (cleanText(search)) {
     values.push(`%${cleanText(search)}%`);
     conditions.push(`(
@@ -145,11 +159,20 @@ export async function listOrders({ search = '', status = 'all' } = {}) {
   }
 
   const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+  
+  // Sorting logic
+  let orderBy = 'created_at DESC';
+  const [sortField, sortDir] = (sort || '').split(':');
+  const allowedFields = ['created_at', 'total_amount'];
+  if (allowedFields.includes(sortField)) {
+    orderBy = `${sortField} ${sortDir?.toUpperCase() === 'ASC' ? 'ASC' : 'DESC'}`;
+  }
+
   const rows = await dbQuery(`
     SELECT *
     FROM orders
     ${whereClause}
-    ORDER BY created_at DESC
+    ORDER BY ${orderBy}
     LIMIT 200
   `, values);
 
@@ -190,6 +213,27 @@ export async function updateOrder(id, updates) {
     WHERE id = $${values.length}
     RETURNING *
   `, values);
+
+  return rows[0] ? normalizeOrder(rows[0]) : null;
+}
+
+export async function updatePaymentStatus(orderId, { razorpayPaymentId, razorpaySignature, status = 'paid' }) {
+  if (!hasDatabase()) {
+    return null;
+  }
+
+  await ensureOrdersTable();
+
+  const rows = await dbQuery(`
+    UPDATE orders
+    SET
+      razorpay_payment_id = $1,
+      razorpay_signature = $2,
+      payment_status = $3,
+      updated_at = NOW()
+    WHERE id = $4
+    RETURNING *
+  `, [razorpayPaymentId, razorpaySignature, status, orderId]);
 
   return rows[0] ? normalizeOrder(rows[0]) : null;
 }

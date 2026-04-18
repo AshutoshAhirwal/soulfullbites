@@ -143,4 +143,12 @@ class RecipeScene {
 
 export function startRecipeExperience() {
     new RecipeScene();
+
+    const loader = document.getElementById('loader');
+    if (loader) {
+        setTimeout(() => {
+            loader.style.opacity = '0';
+            setTimeout(() => loader.style.display = 'none', 800);
+        }, 1000);
+    }
 }

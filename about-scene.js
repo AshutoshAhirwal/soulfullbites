@@ -190,4 +190,12 @@ class AboutScene {
 
 export function startAboutExperience() {
     new AboutScene();
+    
+    const loader = document.getElementById('loader');
+    if (loader) {
+        setTimeout(() => {
+            loader.style.opacity = '0';
+            setTimeout(() => loader.style.display = 'none', 800);
+        }, 1000);
+    }
 }

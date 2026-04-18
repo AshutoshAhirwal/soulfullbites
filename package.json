@@ -18,6 +18,7 @@
     "@theatre/studio": "^0.7.0",
     "gsap": "^3.12.0",
     "lenis": "^1.1.0",
+    "razorpay": "^2.9.2",
     "resend": "^6.10.0",
     "three": "^0.183.2"
   }

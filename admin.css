@@ -167,9 +167,8 @@
 }
 
 .admin-filters {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) 220px;
-    gap: 1rem;
+    display: block; /* Ensure search bar takes full width when alone */
+    margin-bottom: 1rem;
 }
 
 .admin-field-small {
@@ -183,16 +182,27 @@
 }
 
 .admin-stat {
-    padding: 1rem;
-    border-radius: 1.25rem;
-    background: rgba(255, 248, 242, 0.92);
-    border: 1px solid rgba(201, 153, 58, 0.14);
+    padding: 1.5rem;
+    border-radius: 1.5rem;
+    background: #fff;
+    border: 1px solid rgba(74, 44, 26, 0.08);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.02);
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    transition: transform 0.3s;
+}
+
+.admin-stat:hover {
+    transform: translateY(-2px);
+    border-color: var(--gold);
 }
 
 .admin-stat strong {
     display: block;
-    font-size: 1.6rem;
+    font-size: 2.2rem;
     color: var(--choc-dark);
+    font-family: 'Cormorant Garamond', serif;
 }
 
 .admin-stat span {
@@ -214,9 +224,7 @@
 }
 
 .admin-order-card {
-    display: grid;
-    grid-template-columns: 1.3fr 1fr;
-    gap: 1.5rem;
+    display: block; /* Content is already managed by card-split-grid internally */
 }
 
 .admin-order-top {
@@ -265,6 +273,18 @@
     display: block;
     color: var(--text-light);
     margin-top: 0.15rem;
+    font-size: 0.75rem;
+}
+
+.admin-order-content-inner {
+    background: rgba(139, 94, 60, 0.04);
+    border: 1px solid rgba(139, 94, 60, 0.08);
+    border-radius: 1.5rem;
+    padding: 1.5rem;
+    min-height: 140px;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
 }
 
 .admin-order-panel {
@@ -297,6 +317,84 @@
 .admin-badge.preparing { background: rgba(139, 94, 60, 0.14); color: var(--choc-mid); }
 .admin-badge.delivered { background: rgba(80, 138, 104, 0.16); color: #2d6e4b; }
 .admin-badge.cancelled { background: rgba(176, 71, 71, 0.14); color: #9d3030; }
+.admin-badge.paid { background: rgba(45, 110, 75, 0.12); color: #2d6e4b; border: 1px solid rgba(45, 110, 75, 0.2); }
+.admin-badge.unpaid { background: rgba(138, 99, 24, 0.1); color: #8a6318; border: 1px solid rgba(138, 99, 24, 0.15); }
+
+.admin-toolbar {
+    background: #fff;
+    padding: 2rem;
+    border-radius: 2rem;
+    margin-bottom: 2rem;
+    border: 1px solid rgba(74, 44, 26, 0.05);
+    box-shadow: 0 15px 40px rgba(0,0,0,0.02);
+}
+
+.admin-toolbar-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    gap: 1.5rem;
+    margin-top: 1.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid rgba(0,0,0,0.05);
+}
+
+.admin-filters-group {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.admin-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.admin-field span {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05rem;
+    font-weight: 600;
+    color: var(--text-light);
+}
+
+.admin-field select, .admin-field input {
+    height: 44px;
+    padding: 0 1rem;
+    background: #fdfdfd;
+    border: 1px solid #e2e8f0;
+    border-radius: 0.75rem;
+    font-size: 0.9rem;
+    color: var(--choc-dark);
+    outline: none;
+    transition: all 0.3s;
+}
+
+.admin-field select:focus, .admin-field input:focus {
+    border-color: var(--choc-light);
+    background: #fff;
+    box-shadow: 0 0 0 3px rgba(201, 147, 106, 0.1);
+}
+
+/* Card Improvements */
+.admin-order-card {
+    border: 1px solid rgba(74, 44, 26, 0.05);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.02);
+}
+
+.admin-order-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.card-split-grid {
+    display: grid;
+    grid-template-columns: 1.2fr 0.8fr;
+    gap: 3rem;
+}
 
 .hidden {
     display: none !important;
@@ -321,4 +419,91 @@
         flex-direction: column;
         align-items: flex-start;
     }
+}
+
+/* ---- DASHBOARD TABS ---- */
+.admin-tabs {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    border-bottom: 1px solid rgba(74, 44, 26, 0.1);
+    padding-bottom: 1rem;
+    overflow-x: auto;
+}
+
+.admin-tab {
+    padding: 0.8rem 1.5rem;
+    border-radius: 2rem;
+    background: transparent;
+    border: 1px solid transparent;
+    color: var(--text-mid);
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.3s;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.admin-tab:hover {
+    background: rgba(74, 44, 26, 0.05);
+}
+
+.admin-tab.active {
+    background: var(--choc-dark);
+    color: #fff;
+}
+
+/* ---- COMPACT ORDER ROW (Alternative View) ---- */
+.admin-order-row {
+    background: #fff;
+    padding: 1.5rem 2rem;
+    border-radius: 1.5rem;
+    margin-bottom: 1rem;
+    display: grid;
+    grid-template-columns: 120px 1fr 150px 120px 150px 100px;
+    align-items: center;
+    gap: 2rem;
+    border: 1px solid rgba(74, 44, 26, 0.05);
+    transition: all 0.3s;
+}
+
+.admin-order-row:hover {
+    transform: translateX(5px);
+    border-color: var(--choc-light);
+    box-shadow: 0 5px 20px rgba(0,0,0,0.05);
+}
+
+.admin-order-row .id { font-family: monospace; font-size: 0.8rem; color: #999; }
+.admin-order-row .name { font-weight: 600; color: var(--choc-dark); }
+.admin-order-row .total { font-weight: 700; color: var(--gold); }
+
+/* ---- SEARCH ENHANCEMENT ---- */
+.admin-search-wrap {
+    position: relative;
+    flex: 1;
+}
+
+.admin-search-wrap svg {
+    position: absolute;
+    left: 1.2rem;
+    top: 50%;
+    transform: translateY(-50%);
+    opacity: 0.4;
+}
+
+#admin-search {
+    padding-left: 3rem;
+    width: 100%;
+    height: 52px;
+    background: #fdfdfd;
+    border: 1px solid rgba(74, 44, 26, 0.12);
+    border-radius: 1rem;
+    font-size: 1rem;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+#admin-search:focus {
+    background: #fff;
+    border-color: var(--choc-light);
+    box-shadow: 0 0 0 4px rgba(201, 147, 106, 0.15);
 }
