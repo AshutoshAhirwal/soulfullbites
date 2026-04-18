@@ -157,6 +157,20 @@ export default async function handler(req, res) {
 
       await resend.emails.send(waitlistNotification);
 
+      // Record waitlist in DB
+      await createOrder(buildOrderRecord({
+        user_name: 'Waitlist Member',
+        user_email: safeEmail,
+        user_phone: 'N/A',
+        user_address: 'Waitlist',
+        order_items: 'Waitlist Signup',
+        order_lines: [],
+        order_total: '₹0',
+        order_total_value: 0,
+        source: WAITLIST_SOURCE,
+        payment_status: 'waitlist'
+      }));
+
       const canSendWaitlistCustomerEmail = customerEmailsEnabled && (!testingMode || isAllowedTestRecipient(safeEmail, allowedTestRecipients));
 
       if (!canSendWaitlistCustomerEmail) {

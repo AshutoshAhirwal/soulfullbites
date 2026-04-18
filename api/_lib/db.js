@@ -86,5 +86,40 @@ export async function ensureOrdersTable() {
     )
   `);
 
+  await dbQuery(`
+    CREATE TABLE IF NOT EXISTS site_content (
+      key TEXT PRIMARY KEY,
+      value TEXT NOT NULL,
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `);
+
+  await dbQuery(`
+    CREATE TABLE IF NOT EXISTS products (
+      id TEXT PRIMARY KEY,
+      name TEXT NOT NULL,
+      description TEXT NOT NULL,
+      price INTEGER NOT NULL,
+      image_slug TEXT NOT NULL DEFAULT 'chocolate_bar.png',
+      flavor_note TEXT,
+      ingredients TEXT,
+      is_active BOOLEAN NOT NULL DEFAULT TRUE,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `);
+
+  await dbQuery(`
+    CREATE TABLE IF NOT EXISTS faq_items (
+      id SERIAL PRIMARY KEY,
+      category TEXT NOT NULL DEFAULT 'General',
+      question TEXT NOT NULL,
+      answer TEXT NOT NULL,
+      is_active BOOLEAN NOT NULL DEFAULT TRUE,
+      sort_order INTEGER NOT NULL DEFAULT 0,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `);
+
   ordersTableReady = true;
 }

@@ -88,6 +88,8 @@
 
 .admin-field input,
 .admin-field select,
+.admin-field textarea,
+.admin-select,
 .admin-note-input {
     width: 100%;
     padding: 0.95rem 1rem;
@@ -97,6 +99,11 @@
     color: var(--text-dark);
     font: inherit;
     outline: none;
+}
+
+.admin-field textarea {
+    min-height: 120px;
+    resize: vertical;
 }
 
 .admin-note-input {
@@ -360,7 +367,11 @@
     color: var(--text-light);
 }
 
-.admin-field select, .admin-field input {
+.admin-field select, 
+.admin-field input, 
+.admin-field textarea,
+.admin-select {
+    width: 100%;
     height: 44px;
     padding: 0 1rem;
     background: #fdfdfd;
@@ -372,7 +383,16 @@
     transition: all 0.3s;
 }
 
-.admin-field select:focus, .admin-field input:focus {
+.admin-field textarea {
+    height: auto;
+    min-height: 100px;
+    padding: 1rem;
+}
+
+.admin-field select:focus, 
+.admin-field input:focus, 
+.admin-field textarea:focus,
+.admin-select:focus {
     border-color: var(--choc-light);
     background: #fff;
     box-shadow: 0 0 0 3px rgba(201, 147, 106, 0.1);
@@ -506,4 +526,44 @@
     background: #fff;
     border-color: var(--choc-light);
     box-shadow: 0 0 0 4px rgba(201, 147, 106, 0.15);
+}
+
+.admin-tabs-mini {
+    display: flex;
+    gap: 0.75rem;
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid rgba(74, 44, 26, 0.05);
+    overflow-x: auto;
+}
+
+.admin-tab-mini {
+    padding: 0.6rem 1.2rem;
+    background: transparent;
+    border: 1px solid rgba(74, 44, 26, 0.1);
+    border-radius: 2rem;
+    font-size: 0.85rem;
+    color: var(--choc-dark);
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.admin-tab-mini:hover {
+    background: rgba(139, 94, 60, 0.04);
+    border-color: var(--gold);
+}
+
+.admin-tab-mini.active {
+    background: var(--choc-dark);
+    color: var(--cream);
+    border-color: var(--choc-dark);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.content-section-card {
+    background: rgba(139, 94, 60, 0.02);
+    padding: 2rem;
+    border-radius: 1.5rem;
+    border: 1px solid rgba(139, 94, 60, 0.05);
 }

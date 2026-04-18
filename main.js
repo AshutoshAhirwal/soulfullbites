@@ -68,12 +68,15 @@ function runBasicLoader() {
 }
 
 window.addEventListener('load', async () => {
+  // Apply dynamic content first
+  await applyDynamicContent();
+
   if (document.querySelector('#main-canvas')) {
     const { startHomeExperience } = await import('./home-scene.js');
     startHomeExperience();
     return;
   }
-
+  
   if (document.querySelector('#about-canvas')) {
     const { startAboutExperience } = await import('./about-scene.js');
     startAboutExperience();
@@ -96,6 +99,133 @@ window.addEventListener('load', async () => {
 
   runBasicLoader();
 });
+
+async function applyDynamicContent() {
+  try {
+    const res = await fetch('/api/content');
+    if (!res.ok) return;
+    const content = await res.json();
+    
+    document.querySelectorAll('[data-content-key]').forEach(el => {
+      const key = el.dataset.contentKey;
+      if (content[key]) {
+        // Special handling for HTML content (to allow <em>, <br> etc)
+        const isHtmlTag = ['H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'P', 'BLOCKQUOTE', 'LI'].includes(el.tagName);
+        if (isHtmlTag || el.dataset.allowHtml === 'true') {
+            el.innerHTML = content[key];
+        } else if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') {
+          el.value = content[key];
+        } else {
+          el.textContent = content[key];
+        }
+      }
+    });
+
+    if (content.site_title) {
+        document.querySelectorAll('.nav-brand, .loader-brand, .logo-text, .admin-brand').forEach(el => el.textContent = content.site_title);
+    }
+    
+    if (content.insta_link) {
+        document.querySelectorAll('.nav-insta, .social-link-insta').forEach(el => {
+            el.href = content.insta_link;
+        });
+    }
+
+    // Load shop products if on shop page
+    if (document.getElementById('shop-grid')) {
+        await loadShopProducts();
+    }
+
+    // Load FAQ items if on FAQ page
+    if (document.querySelector('.faq-accordion')) {
+        await loadPageFaqs();
+    }
+  } catch (err) {
+    console.warn('CMS skip:', err);
+  }
+}
+
+async function loadShopProducts() {
+    const grid = document.getElementById('shop-grid');
+    if (!grid) return;
+
+    try {
+        const res = await fetch('/api/products');
+        if (!res.ok) throw new Error('Failed to fetch products');
+        const products = await res.json();
+
+        if (products.length === 0) {
+            grid.innerHTML = '<p style="grid-column: 1/-1; text-align: center; opacity: 0.5; padding: 5rem;">Our chocolate library is currently being restocked. Please check back soon.</p>';
+            return;
+        }
+
+        grid.innerHTML = products.map(p => `
+            <div class="product-card" data-id="${p.id}" data-name="${p.name}" data-price="${p.price}">
+                <img src="/assets/${p.image_slug || 'chocolate_bar.png'}" alt="${p.name}" class="product-img">
+                <h3>${p.name}</h3>
+                <span class="price">₹${p.price.toFixed(2)}</span>
+                <button class="btn-buy">Add to Bag</button>
+                <p class="flavor-desc" style="font-size: 0.8rem; margin-top: 1rem; color: var(--text-light);">${p.flavor_note || p.description}</p>
+            </div>
+        `).join('');
+    } catch (err) {
+        console.error('Shop load error:', err);
+    }
+}
+
+async function loadPageFaqs() {
+    const container = document.querySelector('.faq-accordion');
+    if (!container) return;
+
+    try {
+        const res = await fetch('/api/faq');
+        if (!res.ok) throw new Error('Failed to fetch FAQs');
+        const faqs = await res.json();
+
+        if (faqs.length === 0) {
+            container.innerHTML = '<p style="text-align: center; opacity: 0.5;">Our Archive is currently being re-indexed.</p>';
+            return;
+        }
+
+        // Group by category
+        const categories = {};
+        faqs.forEach(f => {
+            if (!categories[f.category]) categories[f.category] = [];
+            categories[f.category].push(f);
+        });
+
+        container.innerHTML = Object.entries(categories).map(([cat, items]) => `
+            <div class="faq-section">
+                <h2 class="faq-section-title">${cat}</h2>
+                ${items.map(item => `
+                    <div class="faq-item">
+                        <div class="faq-question">
+                            <h3>${item.question}</h3>
+                            <div class="faq-icon">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                            </div>
+                        </div>
+                        <div class="faq-answer">
+                            <p>${item.answer}</p>
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+        `).join('');
+
+        // Re-attach accordion listeners (since we just wiped the static ones)
+        container.querySelectorAll('.faq-item').forEach(item => {
+            item.addEventListener('click', () => {
+                const isActive = item.classList.contains('active');
+                container.querySelectorAll('.faq-item').forEach(other => other.classList.remove('active'));
+                if (!isActive) item.classList.add('active');
+            });
+        });
+
+    } catch (err) {
+        console.error('FAQ load error:', err);
+    }
+}
 
 async function requestJson(url, options = {}) {
   const response = await fetch(url, options);
@@ -236,31 +366,34 @@ document.addEventListener('DOMContentLoaded', () => {
     cartDrawer.style.right = '-400px';
   });
 
-  document.querySelectorAll('.btn-buy').forEach((button) => {
-    button.addEventListener('click', (event) => {
-      const card = event.target.closest('.product-card');
-      if (!card) return;
+  document.body.addEventListener('click', (event) => {
+    const button = event.target.closest('.btn-buy');
+    if (!button) return;
 
-      const id = card.dataset.id;
-      const name = card.dataset.name;
-      const price = parseFloat(card.dataset.price || '0');
-      const existing = bag.find((item) => item.id === id);
+    const card = button.closest('.product-card');
+    if (!card) return;
 
-      if (existing) {
-        existing.qty += 1;
-      } else {
-        bag.push({ id, name, price, qty: 1 });
-      }
+    const id = card.dataset.id;
+    const name = card.dataset.name;
+    const price = parseFloat(card.dataset.price || '0');
+    const existing = bag.find((item) => item.id === id);
 
-      updateUI();
-      cartDrawer.style.right = '0';
+    if (existing) {
+      existing.qty += 1;
+    } else {
+      bag.push({ id, name, price, qty: 1 });
+    }
 
-      const oldText = button.textContent;
-      button.textContent = 'Added';
-      setTimeout(() => {
-        button.textContent = oldText;
-      }, 1200);
-    });
+    updateUI();
+    cartDrawer.style.right = '0';
+
+    const oldText = button.textContent;
+    button.textContent = 'Added';
+    button.disabled = true;
+    setTimeout(() => {
+      button.textContent = oldText;
+      button.disabled = false;
+    }, 1200);
   });
 
   cartItems?.addEventListener('click', (event) => {

@@ -53,14 +53,13 @@
         style="position: fixed; top: 0; right: -400px; width: 400px; height: 100vh; background: #fff; z-index: 1000; box-shadow: -10px 0 30px rgba(0,0,0,0.1); transition: right 0.4s cubic-bezier(0.16,1,0.3,1); display: flex; flex-direction: column; color: var(--text-dark);">
         <div
             style="padding: 2.5rem; border-bottom: 1px solid var(--glass-border); display: flex; justify-content: space-between; align-items: center;">
-            <h3 style="font-size: 1.8rem;">Your Bag</h3>
+            <h3 style="font-size: 1.8rem;" data-content-key="shop_bag_title">Your Bag</h3>
             <button id="cart-close"
                 style="background: none; border: none; font-size: 1.5rem; cursor: pointer;">✕</button>
         </div>
         <div id="cart-items" style="flex: 1; padding: 1.5rem; overflow-y: auto;">
             <!-- Cart items will be injected here -->
-            <p id="empty-msg" style="text-align: center; color: var(--text-light); margin-top: 5rem;">Your bag is empty.
-            </p>
+            <p id="empty-msg" style="text-align: center; color: var(--text-light); margin-top: 5rem;" data-content-key="shop_empty_msg">Your bag is empty.</p>
         </div>
         <div style="padding: 2.5rem; border-top: 1px solid var(--glass-border); background: var(--warm-white);">
             <div style="display: flex; justify-content: space-between; margin-bottom: 2rem;">
@@ -69,7 +68,7 @@
             </div>
             <button id="checkout-btn"
                 style="width: 100%; padding: 1.2rem; background: var(--choc-dark); color: #fff; border: none; border-radius: 3rem; font-weight: 600; cursor: pointer; transition: background 0.3s; opacity: 0.5;"
-                disabled>Checkout</button>
+                disabled data-content-key="shop_checkout_txt">Checkout</button>
         </div>
     </div>
 
@@ -77,8 +76,8 @@
         <div class="container text-center">
             <header class="hero-small">
                 <span class="label-tag">Artisanal Store</span>
-                <h1>Chocolate for<br><em>the Soul.</em></h1>
-                <p class="label-sub" style="margin: 0 auto;">Small-batch, handmade bars shipped fresh from our kitchen
+                <h1 data-content-key="shop_h1">Chocolate for<br><em>the Soul.</em></h1>
+                <p class="label-sub" style="margin: 0 auto;" data-content-key="shop_p">Small-batch, handmade bars shipped fresh from our kitchen
                     to yours.</p>
             </header>
 

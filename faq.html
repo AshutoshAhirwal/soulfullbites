@@ -227,72 +227,12 @@
     <main>
         <header class="archive-hero">
             <div class="recipe-eyebrow">The Soulfull Archive</div>
-            <h1>Archive of Intent</h1>
-            <p>Every bite is a question answered. Here are the most fundamental ones we've encountered.</p>
+            <h1 data-content-key="faq_h1">Archive of Intent</h1>
+            <p data-content-key="faq_p">Every bite is a question answered. Here are the most fundamental ones we've encountered.</p>
         </header>
 
         <section class="faq-accordion">
-            
-            <div class="faq-section">
-                <h2 class="faq-section-title">The Foundation</h2>
-                
-                <div class="faq-item">
-                    <div class="faq-question">
-                        <h3>Do you ship internationally?</h3>
-                        <div class="faq-icon">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                        </div>
-                    </div>
-                    <div class="faq-answer">
-                        <p>Currently, we ship within India only. Each bar is packed with thermal protection to ensure it arrives with its soul intact, even in mountain heat.</p>
-                    </div>
-                </div>
-
-                <div class="faq-item">
-                    <div class="faq-question">
-                        <h3>Is your chocolate vegan?</h3>
-                        <div class="faq-icon">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                        </div>
-                    </div>
-                    <div class="faq-answer">
-                        <p>Our "Dark & Bold" bar is 100% vegan. Our "Milk & Velvet" and "White & Rose" contain high-quality grass-fed dairy from local mountain farms.</p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="archive-note">
-                <p>"The best way to eat chocolate is with the eyes closed, and the mind open." — Anonymous Alchemist</p>
-            </div>
-
-            <div class="faq-section">
-                <h2 class="faq-section-title">Preparation & Care</h2>
-
-                <div class="faq-item">
-                    <div class="faq-question">
-                        <h3>How should I store my bars?</h3>
-                        <div class="faq-icon">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                        </div>
-                    </div>
-                    <div class="faq-answer">
-                        <p>We recommend a cool, dry library. Between 16°C and 20°C is perfect. Avoid the fridge—extreme cold "shocks" the cocoa butter and mutes the story within.</p>
-                    </div>
-                </div>
-
-                <div class="faq-item">
-                    <div class="faq-question">
-                        <h3>Are your ingredients organic?</h3>
-                        <div class="faq-icon">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-                        </div>
-                    </div>
-                    <div class="faq-answer">
-                        <p>Absolutely. We use certified organic cacao from ethical estates, unrefined organic sugars, and botanicals we'd be proud to grow ourselves.</p>
-                    </div>
-                </div>
-            </div>
-
+            <!-- Dynamic FAQ Items Injected Here -->
         </section>
 
         <div style="text-align: center; padding-bottom: 10rem;">
@@ -334,15 +274,6 @@
     </footer>
 
     <script type="module" src="./main.js"></script>
-    <script>
-        document.querySelectorAll('.faq-item').forEach(item => {
-            item.addEventListener('click', () => {
-                const isActive = item.classList.contains('active');
-                document.querySelectorAll('.faq-item').forEach(other => other.classList.remove('active'));
-                if (!isActive) item.classList.add('active');
-            });
-        });
-    </script>
 </body>
 
 </html>
