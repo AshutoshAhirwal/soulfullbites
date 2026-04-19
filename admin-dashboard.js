@@ -410,8 +410,10 @@ window.handleRealUpload = async (input) => {
       const data = await res.json();
       if (!data.path) throw new Error('Server did not return an image path');
 
-      // Store the API path (e.g. /api/media/42) — works on Vercel and locally
-      const current = imagesInput.value.split(',').map(s => s.trim()).filter(s => s && !s.startsWith('data:'));
+      // Keep only already-uploaded paths (/api/media/ or http://), drop old placeholders like 'chocolate_bar.png'
+      const current = imagesInput.value.split(',')
+        .map(s => s.trim())
+        .filter(s => s && (s.startsWith('/api/') || s.startsWith('http')));
       current.push(data.path);
       imagesInput.value = current.join(', ');
 
@@ -472,7 +474,7 @@ function renderProducts(products) {
                             <span>Visual Asset List</span>
                             <button onclick="this.closest('article').querySelector('.prod-images').value=''; this.closest('article').querySelector('.prod-images').dispatchEvent(new Event('input'))" style="background:none; border:none; color:#9d3030; font-size: 0.6rem; cursor:pointer; text-decoration: underline;">Clear All</button>
                         </div>
-                        <input type="text" class="prod-images" value="${escapeHtml(imageStr)}" placeholder="Filenames or URLs" oninput="const first = this.value.split(',')[0].trim(); this.closest('article').querySelector('.admin-prod-preview img').src = (first.startsWith('http') || first.startsWith('data')) ? first : '/assets/'+(first || 'chocolate_bar.png')">
+                        <input type="text" class="prod-images" value="${escapeHtml(imageStr)}" placeholder="Filenames or URLs" oninput="const first = this.value.split(',')[0].trim(); const src = (first.startsWith('/api/') || first.startsWith('http') || first.startsWith('data')) ? first : '/assets/' + (first || 'chocolate_bar.png'); this.closest('article').querySelector('.admin-prod-preview img').src = src;">
                         <p style="font-size: 0.6rem; opacity: 0.6; margin-top: 0.5rem; line-height: 1.4;">• Use the button above to upload files<br>• Or paste external Image URLs</p>
                     </label>
                 </div>
