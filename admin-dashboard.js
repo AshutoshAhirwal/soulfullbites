@@ -23,229 +23,229 @@ let cachedProducts = [];
 let orderFilter = 'all';
 
 function setState(msg, type = 'error') {
-    if (!stateEl) return;
-    stateEl.textContent = msg;
-    stateEl.className = `admin-state ${type}`;
-    stateEl.classList.toggle('hidden', !msg);
-    if (msg) setTimeout(() => stateEl.classList.add('hidden'), 5000);
+  if (!stateEl) return;
+  stateEl.textContent = msg;
+  stateEl.className = `admin-state ${type}`;
+  stateEl.classList.toggle('hidden', !msg);
+  if (msg) setTimeout(() => stateEl.classList.add('hidden'), 5000);
 }
 
 function escapeHtml(unsafe) {
-    if (!unsafe) return '';
-    return String(unsafe)
-         .replace(/&/g, "&amp;")
-         .replace(/</g, "&lt;")
-         .replace(/>/g, "&gt;")
-         .replace(/"/g, "&quot;")
-         .replace(/'/g, "&#039;");
+  if (!unsafe) return '';
+  return String(unsafe)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
 }
 
 async function apiRequest(url, options = {}) {
-    const res = await fetch(url, {
-        ...options,
-        credentials: 'same-origin',
-        headers: {
-            'Content-Type': 'application/json',
-            ...(options.headers || {})
-        }
-    });
-    
-    if (res.status === 401) {
-        showLogin();
-        throw new Error('Please login to continue');
+  const res = await fetch(url, {
+    ...options,
+    credentials: 'same-origin',
+    headers: {
+      'Content-Type': 'application/json',
+      ...(options.headers || {})
     }
+  });
 
-    let data;
-    try {
-        data = await res.json();
-    } catch (e) {
-        if (!res.ok) throw new Error(`Server error: ${res.status}`);
-        data = {};
-    }
+  if (res.status === 401) {
+    showLogin();
+    throw new Error('Please login to continue');
+  }
 
-    if (!res.ok) throw new Error(data.error || 'Request failed');
-    return data;
+  let data;
+  try {
+    data = await res.json();
+  } catch (e) {
+    if (!res.ok) throw new Error(`Server error: ${res.status}`);
+    data = {};
+  }
+
+  if (!res.ok) throw new Error(data.error || 'Request failed');
+  return data;
 }
 
 function showLogin() {
-    loginPanel?.classList.remove('hidden');
-    dashboard?.classList.add('hidden');
+  loginPanel?.classList.remove('hidden');
+  dashboard?.classList.add('hidden');
 }
 
 function showDashboard() {
-    loginPanel?.classList.add('hidden');
-    dashboard?.classList.remove('hidden');
+  loginPanel?.classList.add('hidden');
+  dashboard?.classList.remove('hidden');
 }
 
 // Login Handler
 loginForm?.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    const btn = document.getElementById('admin-login-button');
-    if (btn) { btn.disabled = true; btn.textContent = 'Authenticating...'; }
+  e.preventDefault();
+  const btn = document.getElementById('admin-login-button');
+  if (btn) { btn.disabled = true; btn.textContent = 'Authenticating...'; }
 
-    try {
-        await apiRequest('/api/admin-login', {
-            method: 'POST',
-            body: JSON.stringify({ password: passwordInput.value })
-        });
-        showDashboard();
-        loadOrders();
-    } catch (err) {
-        setState(err.message);
-    } finally {
-        if (btn) { btn.disabled = false; btn.textContent = 'Open Dashboard'; }
-    }
+  try {
+    await apiRequest('/api/admin-login', {
+      method: 'POST',
+      body: JSON.stringify({ password: passwordInput.value })
+    });
+    showDashboard();
+    loadOrders();
+  } catch (err) {
+    setState(err.message);
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = 'Open Dashboard'; }
+  }
 });
 
 // Logout Handler
 logoutBtn?.addEventListener('click', async () => {
-    try {
-        await apiRequest('/api/admin-logout', { method: 'POST' });
-        showLogin();
-    } catch (err) { setState('Logout failed'); }
+  try {
+    await apiRequest('/api/admin-logout', { method: 'POST' });
+    showLogin();
+  } catch (err) { setState('Logout failed'); }
 });
 
 refreshBtn?.addEventListener('click', () => {
-    if (!moduleOrders.classList.contains('hidden')) loadOrders();
-    if (!moduleProducts.classList.contains('hidden')) loadProducts();
+  if (!moduleOrders.classList.contains('hidden')) loadOrders();
+  if (!moduleProducts.classList.contains('hidden')) loadProducts();
 });
 
 function applyFilters() {
-    const term = (searchInput?.value || '').toLowerCase();
-    
-    if (!moduleOrders.classList.contains('hidden')) {
-        let filtered = cachedOrders;
-        if (orderFilter !== 'all') {
-            if (orderFilter === 'paid') filtered = filtered.filter(o => o.paymentStatus === 'paid');
-            else if (orderFilter === 'waitlist') filtered = filtered.filter(o => o.paymentStatus === 'waitlist');
-            else filtered = filtered.filter(o => o.status === orderFilter);
-        }
-        if (term) {
-            filtered = filtered.filter(o => 
-                o.customerName.toLowerCase().includes(term) || 
-                o.customerEmail.toLowerCase().includes(term) || 
-                o.id.toString().includes(term)
-            );
-        }
-        renderOrders(filtered);
-    }
+  const term = (searchInput?.value || '').toLowerCase();
 
-    if (!moduleProducts.classList.contains('hidden')) {
-        let filtered = cachedProducts;
-        if (term) {
-            filtered = filtered.filter(p => 
-                p.name.toLowerCase().includes(term) || 
-                p.description.toLowerCase().includes(term)
-            );
-        }
-        renderProducts(filtered);
+  if (!moduleOrders.classList.contains('hidden')) {
+    let filtered = cachedOrders;
+    if (orderFilter !== 'all') {
+      if (orderFilter === 'paid') filtered = filtered.filter(o => o.paymentStatus === 'paid');
+      else if (orderFilter === 'waitlist') filtered = filtered.filter(o => o.paymentStatus === 'waitlist');
+      else filtered = filtered.filter(o => o.status === orderFilter);
     }
+    if (term) {
+      filtered = filtered.filter(o =>
+        o.customerName.toLowerCase().includes(term) ||
+        o.customerEmail.toLowerCase().includes(term) ||
+        o.id.toString().includes(term)
+      );
+    }
+    renderOrders(filtered);
+  }
+
+  if (!moduleProducts.classList.contains('hidden')) {
+    let filtered = cachedProducts;
+    if (term) {
+      filtered = filtered.filter(p =>
+        p.name.toLowerCase().includes(term) ||
+        p.description.toLowerCase().includes(term)
+      );
+    }
+    renderProducts(filtered);
+  }
 }
 
 searchInput?.addEventListener('input', applyFilters);
 
 document.querySelectorAll('#admin-tabs button').forEach(btn => {
-    btn.addEventListener('click', () => {
-        document.querySelectorAll('#admin-tabs button').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        orderFilter = btn.dataset.status;
-        applyFilters();
-    });
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#admin-tabs button').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    orderFilter = btn.dataset.status;
+    applyFilters();
+  });
 });
 
 // Export CSV Logic
 document.getElementById('admin-export-csv')?.addEventListener('click', () => {
-    if (!cachedOrders || cachedOrders.length === 0) {
-        setState('No order data available for export');
-        return;
-    }
+  if (!cachedOrders || cachedOrders.length === 0) {
+    setState('No order data available for export');
+    return;
+  }
 
-    const headers = ['ID', 'Customer', 'Email', 'Phone', 'Address', 'Amount', 'Status', 'Payment Status', 'Items'];
-    const rows = cachedOrders.map(o => [
-        o.id,
-        o.customerName,
-        o.customerEmail,
-        o.customerPhone,
-        o.customerAddress,
-        o.totalAmount,
-        o.status,
-        o.paymentStatus,
-        (o.items || []).map(i => `${i.name}(${i.quantity})`).join('; ')
-    ]);
+  const headers = ['ID', 'Customer', 'Email', 'Phone', 'Address', 'Amount', 'Status', 'Payment Status', 'Items'];
+  const rows = cachedOrders.map(o => [
+    o.id,
+    o.customerName,
+    o.customerEmail,
+    o.customerPhone,
+    o.customerAddress,
+    o.totalAmount,
+    o.status,
+    o.paymentStatus,
+    (o.items || []).map(i => `${i.name}(${i.quantity})`).join('; ')
+  ]);
 
-    const csvBody = [
-        headers.join(','),
-        ...rows.map(row => row.map(cell => `"${(cell || '').toString().replace(/"/g, '""')}"`).join(','))
-    ].join('\n');
+  const csvBody = [
+    headers.join(','),
+    ...rows.map(row => row.map(cell => `"${(cell || '').toString().replace(/"/g, '""')}"`).join(','))
+  ].join('\n');
 
-    const BOM = '\ufeff';
-    const blob = new Blob([BOM + csvBody], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    
-    const date = new Date().toISOString().split('T')[0];
-    link.download = `soulfullbites_orders_${date}.csv`;
-    
-    document.body.appendChild(link);
-    link.click();
-    
-    setTimeout(() => {
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
-    }, 100);
-    
-    setState('Registry exported to CSV', 'success');
+  const BOM = '\ufeff';
+  const blob = new Blob([BOM + csvBody], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+
+  const date = new Date().toISOString().split('T')[0];
+  link.download = `soulfullbites_orders_${date}.csv`;
+
+  document.body.appendChild(link);
+  link.click();
+
+  setTimeout(() => {
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  }, 100);
+
+  setState('Registry exported to CSV', 'success');
 });
 
 // Global Module Switching
 function switchModule(moduleName) {
-    document.querySelectorAll('[data-module]').forEach(btn => {
-        btn.classList.toggle('active', btn.dataset.module === moduleName);
-    });
+  document.querySelectorAll('[data-module]').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.module === moduleName);
+  });
 
-    moduleOrders?.classList.toggle('hidden', moduleName !== 'orders');
-    moduleProducts?.classList.toggle('hidden', moduleName !== 'products');
-    moduleContent?.classList.toggle('hidden', moduleName !== 'content');
+  moduleOrders?.classList.toggle('hidden', moduleName !== 'orders');
+  moduleProducts?.classList.toggle('hidden', moduleName !== 'products');
+  moduleContent?.classList.toggle('hidden', moduleName !== 'content');
 
-    if (moduleName === 'orders') loadOrders();
-    if (moduleName === 'products') loadProducts();
-    if (moduleName === 'content') loadContentEditor();
+  if (moduleName === 'orders') loadOrders();
+  if (moduleName === 'products') loadProducts();
+  if (moduleName === 'content') loadContentEditor();
 }
 
 document.querySelectorAll('[data-module]').forEach(btn => {
-    btn.addEventListener('click', () => switchModule(btn.dataset.module));
+  btn.addEventListener('click', () => switchModule(btn.dataset.module));
 });
 
 // Order Logic
 async function loadOrders() {
-    if (!moduleOrders || moduleOrders.classList.contains('hidden')) return;
-    setState('Syncing...', 'success');
-    try {
-        const data = await apiRequest('/api/admin-orders');
-        showDashboard();
-        cachedOrders = data.orders || [];
-        renderStats(cachedOrders);
-        applyFilters();
-        setState('');
-    } catch (err) {
-        if (err.message !== 'Please login to continue') setState(err.message || 'Sync failed');
-    }
+  if (!moduleOrders || moduleOrders.classList.contains('hidden')) return;
+  setState('Syncing...', 'success');
+  try {
+    const data = await apiRequest('/api/admin-orders');
+    showDashboard();
+    cachedOrders = data.orders || [];
+    renderStats(cachedOrders);
+    applyFilters();
+    setState('');
+  } catch (err) {
+    if (err.message !== 'Please login to continue') setState(err.message || 'Sync failed');
+  }
 }
 
 function renderStats(orders) {
-    const statsContainer = document.getElementById('admin-stats-container');
-    if (!statsContainer) return;
+  const statsContainer = document.getElementById('admin-stats-container');
+  if (!statsContainer) return;
 
-    const stats = {
-        total: orders.length,
-        new: orders.filter(o => o.status === 'new').length,
-        waitlist: orders.filter(o => o.paymentStatus === 'waitlist').length,
-        paid: orders.filter(o => o.paymentStatus === 'paid').length,
-        delivered: orders.filter(o => o.status === 'delivered').length
-    };
+  const stats = {
+    total: orders.length,
+    new: orders.filter(o => o.status === 'new').length,
+    waitlist: orders.filter(o => o.paymentStatus === 'waitlist').length,
+    paid: orders.filter(o => o.paymentStatus === 'paid').length,
+    delivered: orders.filter(o => o.status === 'delivered').length
+  };
 
-    statsContainer.innerHTML = `
+  statsContainer.innerHTML = `
         <div class="admin-stat">
             <strong>${stats.new}</strong>
             <span>Active/New</span>
@@ -270,12 +270,12 @@ function renderStats(orders) {
 }
 
 function renderOrders(orders) {
-    if (!orders || orders.length === 0) {
-        orderList.innerHTML = '<section class="admin-card"><p class="admin-copy" style="text-align:center; padding: 4rem; opacity: 0.5;">No items found matching current filters.</p></section>';
-        return;
-    }
+  if (!orders || orders.length === 0) {
+    orderList.innerHTML = '<section class="admin-card"><p class="admin-copy" style="text-align:center; padding: 4rem; opacity: 0.5;">No items found matching current filters.</p></section>';
+    return;
+  }
 
-    orderList.innerHTML = orders.map(ord => `
+  orderList.innerHTML = orders.map(ord => `
         <article class="admin-card admin-order-card" style="margin-bottom: 2rem;">
             <div class="admin-order-top" style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 1.5rem;">
                 <div>
@@ -339,121 +339,121 @@ function renderOrders(orders) {
 }
 
 window.updateOrderStatus = async (id, status) => {
-    try {
-        await apiRequest('/api/admin-order-update', { method: 'PATCH', body: JSON.stringify({ id, status }) });
-        loadOrders();
-        setState('Status updated', 'success');
-    } catch (err) { setState('Update failed'); }
+  try {
+    await apiRequest('/api/admin-order-update', { method: 'PATCH', body: JSON.stringify({ id, status }) });
+    loadOrders();
+    setState('Status updated', 'success');
+  } catch (err) { setState('Update failed'); }
 }
 
 // Product Logic
 async function compressImage(base64, maxWidth = 1200, quality = 0.8) {
-    return new Promise((resolve) => {
-        const img = new Image();
-        img.src = base64;
-        img.onload = () => {
-            const canvas = document.createElement('canvas');
-            let width = img.width;
-            let height = img.height;
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.src = base64;
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      let width = img.width;
+      let height = img.height;
 
-            if (width > maxWidth) {
-                height = (maxWidth / width) * height;
-                width = maxWidth;
-            }
+      if (width > maxWidth) {
+        height = (maxWidth / width) * height;
+        width = maxWidth;
+      }
 
-            canvas.width = width;
-            canvas.height = height;
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(img, 0, 0, width, height);
-            resolve(canvas.toDataURL('image/jpeg', quality));
-        };
-    });
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, width, height);
+      resolve(canvas.toDataURL('image/jpeg', quality));
+    };
+  });
 }
 
 window.handleRealUpload = async (input) => {
-    const file = input.files[0];
-    if (!file) return;
-    
-    const container = input.closest('article');
-    if (!container) return console.error('Upload: could not find parent card');
+  const file = input.files[0];
+  if (!file) return;
 
-    const imgEl = container.querySelector('.admin-prod-preview img');
-    const imagesInput = container.querySelector('.prod-images');
-    const btnText = container.querySelector('.upload-btn-text');
+  const container = input.closest('article');
+  if (!container) return console.error('Upload: could not find parent card');
 
-    if (btnText) btnText.textContent = 'Optimizing...';
+  const imgEl = container.querySelector('.admin-prod-preview img');
+  const imagesInput = container.querySelector('.prod-images');
+  const btnText = container.querySelector('.upload-btn-text');
 
-    const reader = new FileReader();
-    reader.onload = async (e) => {
-        try {
-            const rawBase64 = e.target.result;
-            
-            // Optimize first for performance
-            const optimizedBase64 = await compressImage(rawBase64);
-            
-            // Show local preview immediately (good UX)
-            imgEl.src = optimizedBase64;
+  if (btnText) btnText.textContent = 'Optimizing...';
 
-            if (btnText) btnText.textContent = 'Uploading...';
+  const reader = new FileReader();
+  reader.onload = async (e) => {
+    try {
+      const rawBase64 = e.target.result;
 
-            // Send to server
-            const res = await fetch('/api/admin-upload', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
-                    base64: optimizedBase64, 
-                    name: file.name 
-                })
-            });
+      // Optimize first for performance
+      const optimizedBase64 = await compressImage(rawBase64);
 
-            if (!res.ok) throw new Error(`Server upload failed (${res.status})`);
-            const data = await res.json();
-            if (!data.path) throw new Error('Server did not return an image path');
+      // Show local preview immediately (good UX)
+      imgEl.src = optimizedBase64;
 
-            // Store the API path (e.g. /api/media/42) — works on Vercel and locally
-            const current = imagesInput.value.split(',').map(s => s.trim()).filter(s => s && !s.startsWith('data:'));
-            current.push(data.path);
-            imagesInput.value = current.join(', ');
+      if (btnText) btnText.textContent = 'Uploading...';
 
-            // Update preview to the served URL
-            imgEl.src = data.path;
+      // Send to server
+      const res = await fetch('/api/admin-upload', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          base64: optimizedBase64,
+          name: file.name
+        })
+      });
 
-            if (btnText) btnText.textContent = '📷 Add Another Image';
-            setState('Image uploaded & synced ✓', 'success');
-        } catch (err) {
-            console.error(err);
-            if (btnText) btnText.textContent = 'Upload Failed - Retry';
-            setState('Upload failed: ' + err.message);
-        }
-    };
-    reader.readAsDataURL(file);
+      if (!res.ok) throw new Error(`Server upload failed (${res.status})`);
+      const data = await res.json();
+      if (!data.path) throw new Error('Server did not return an image path');
+
+      // Store the API path (e.g. /api/media/42) — works on Vercel and locally
+      const current = imagesInput.value.split(',').map(s => s.trim()).filter(s => s && !s.startsWith('data:'));
+      current.push(data.path);
+      imagesInput.value = current.join(', ');
+
+      // Update preview to the served URL
+      imgEl.src = data.path;
+
+      if (btnText) btnText.textContent = '📷 Add Another Image';
+      setState('Image uploaded & synced ✓', 'success');
+    } catch (err) {
+      console.error(err);
+      if (btnText) btnText.textContent = 'Upload Failed - Retry';
+      setState('Upload failed: ' + err.message);
+    }
+  };
+  reader.readAsDataURL(file);
 }
 
 async function loadProducts() {
-    if (!moduleProducts || moduleProducts.classList.contains('hidden')) return;
-    setState('Catalog loading...', 'success');
-    try {
-        const products = await apiRequest('/api/admin-products');
-        cachedProducts = products || [];
-        applyFilters();
-        setState('');
-    } catch (err) { setState(err.message || 'Load failed'); }
+  if (!moduleProducts || moduleProducts.classList.contains('hidden')) return;
+  setState('Catalog loading...', 'success');
+  try {
+    const products = await apiRequest('/api/admin-products');
+    cachedProducts = products || [];
+    applyFilters();
+    setState('');
+  } catch (err) { setState(err.message || 'Load failed'); }
 }
 
 function renderProducts(products) {
-    if (!products || products.length === 0) {
-        productList.innerHTML = '<section class="admin-card"><p class="admin-copy" style="text-align:center; padding: 4rem; opacity: 0.5;">Catalog empty.</p></section>';
-        return;
-    }
+  if (!products || products.length === 0) {
+    productList.innerHTML = '<section class="admin-card"><p class="admin-copy" style="text-align:center; padding: 4rem; opacity: 0.5;">Catalog empty.</p></section>';
+    return;
+  }
 
-    productList.innerHTML = products.map(p => {
-        let images = [];
-        try { images = JSON.parse(p.images_json || '[]'); } catch(e) { images = [p.image_slug || 'chocolate_bar.png']; }
-        const imageStr = images.join(', ');
-        const firstImg = images[0] || 'chocolate_bar.png';
-        const firstSrc = (firstImg.startsWith('http') || firstImg.startsWith('data') || firstImg.startsWith('/api/')) ? firstImg : `/assets/${firstImg}`;
+  productList.innerHTML = products.map(p => {
+    let images = [];
+    try { images = JSON.parse(p.images_json || '[]'); } catch (e) { images = [p.image_slug || 'chocolate_bar.png']; }
+    const imageStr = images.join(', ');
+    const firstImg = images[0] || 'chocolate_bar.png';
+    const firstSrc = (firstImg.startsWith('http') || firstImg.startsWith('data') || firstImg.startsWith('/api/')) ? firstImg : `/assets/${firstImg}`;
 
-        return `
+    return `
         <article class="admin-card" data-product-id="${escapeHtml(p.id)}" style="margin-bottom: 2rem;">
             <div style="display: grid; grid-template-columns: 240px 1fr 1fr; gap: 2.5rem;">
                 <div class="admin-prod-sidebar" style="background: rgba(74, 44, 26, 0.02); padding: 1.5rem; border-radius: 2rem;">
@@ -517,76 +517,77 @@ function renderProducts(products) {
                 </div>
             </div>
         </article>
-    `; }).join('');
+    `;
+  }).join('');
 }
 
 productList?.addEventListener('click', async (e) => {
-    const card = e.target.closest('[data-product-id]');
-    if (!card) return;
-    const id = card.dataset.productId;
+  const card = e.target.closest('[data-product-id]');
+  if (!card) return;
+  const id = card.dataset.productId;
 
-    if (e.target.classList.contains('prod-save')) {
-        const btn = e.target;
-        btn.disabled = true; btn.textContent = 'Saving...';
-        const imgInput = card.querySelector('.prod-images').value;
-        
-        // Parse image URLs/data (now all from upload endpoint, so all valid)
-        const imgArray = imgInput.split(',')
-            .map(s => s.trim())
-            .filter(s => s); // Just filter empty strings, keep all URLs/data
+  if (e.target.classList.contains('prod-save')) {
+    const btn = e.target;
+    btn.disabled = true; btn.textContent = 'Saving...';
+    const imgInput = card.querySelector('.prod-images').value;
 
-        try {
-            const saveData = {
-                id,
-                name: card.querySelector('.prod-name').value,
-                description: card.querySelector('.prod-desc').value,
-                ingredients: card.querySelector('.prod-ingredients').value,
-                price: parseInt(card.querySelector('.prod-price').value),
-                image_slug: imgArray[0] || 'chocolate_bar.png',
-                images_json: JSON.stringify(imgArray),
-                flavor_note: card.querySelector('.prod-flavor').value,
-                is_active: card.querySelector('.prod-active').value === 'true'
-            };
-            
-            console.log('Saving product:', { id, imageCount: imgArray.length, firstImageType: imgArray[0]?.substring(0, 30) });
-            
-            await apiRequest('/api/admin-products', { 
-                method: 'POST', 
-                body: JSON.stringify(saveData)
-            });;
-            setState('Catalog synced', 'success');
-            loadProducts();
-        } catch (err) { setState(err.message || 'Sync failed'); } finally { btn.disabled = false; btn.textContent = 'Save Changes'; }
-    }
+    // Parse image URLs/data (now all from upload endpoint, so all valid)
+    const imgArray = imgInput.split(',')
+      .map(s => s.trim())
+      .filter(s => s); // Just filter empty strings, keep all URLs/data
 
-    if (e.target.classList.contains('prod-delete')) {
-        if (!confirm('Delete?')) return;
-        try {
-            await apiRequest(`/api/admin-products?id=${id}`, { method: 'DELETE' });
-            loadProducts();
-            setState('Deleted');
-        } catch (err) { setState(err.message || 'Failed'); }
-    }
+    try {
+      const saveData = {
+        id,
+        name: card.querySelector('.prod-name').value,
+        description: card.querySelector('.prod-desc').value,
+        ingredients: card.querySelector('.prod-ingredients').value,
+        price: parseInt(card.querySelector('.prod-price').value),
+        image_slug: imgArray[0] || 'chocolate_bar.png',
+        images_json: JSON.stringify(imgArray),
+        flavor_note: card.querySelector('.prod-flavor').value,
+        is_active: card.querySelector('.prod-active').value === 'true'
+      };
+
+      console.log('Saving product:', { id, imageCount: imgArray.length, firstImageType: imgArray[0]?.substring(0, 30) });
+
+      await apiRequest('/api/admin-products', {
+        method: 'POST',
+        body: JSON.stringify(saveData)
+      });;
+      setState('Catalog synced', 'success');
+      loadProducts();
+    } catch (err) { setState(err.message || 'Sync failed'); } finally { btn.disabled = false; btn.textContent = 'Save Changes'; }
+  }
+
+  if (e.target.classList.contains('prod-delete')) {
+    if (!confirm('Delete?')) return;
+    try {
+      await apiRequest(`/api/admin-products?id=${id}`, { method: 'DELETE' });
+      loadProducts();
+      setState('Deleted');
+    } catch (err) { setState(err.message || 'Failed'); }
+  }
 });
 
 addProductBtn?.addEventListener('click', async () => {
-    const name = prompt('Product Name?', 'New Artisanal Bar');
-    if (!name) return;
-    const id = 'p' + Date.now();
-    try {
-        await apiRequest('/api/admin-products', { method: 'POST', body: JSON.stringify({ id, name, description: 'Enter description...', ingredients: '...', price: 450, image_slug: 'chocolate_bar.png', flavor_note: 'Flavor notes', is_active: true }) });
-        loadProducts();
-        setState('Added to catalog', 'success');
-    } catch (err) { setState('Fail'); }
+  const name = prompt('Product Name?', 'New Artisanal Bar');
+  if (!name) return;
+  const id = 'p' + Date.now();
+  try {
+    await apiRequest('/api/admin-products', { method: 'POST', body: JSON.stringify({ id, name, description: 'Enter description...', ingredients: '...', price: 450, image_slug: 'chocolate_bar.png', flavor_note: 'Flavor notes', is_active: true }) });
+    loadProducts();
+    setState('Added to catalog', 'success');
+  } catch (err) { setState('Fail'); }
 });
 
 // FAQ Logic
 async function renderFaqItemList() {
-    const listContainer = document.getElementById('faq-items-manager');
-    if (!listContainer) return;
-    try {
-        const faqs = await apiRequest('/api/admin-faq');
-        listContainer.innerHTML = `
+  const listContainer = document.getElementById('faq-items-manager');
+  if (!listContainer) return;
+  try {
+    const faqs = await apiRequest('/api/admin-faq');
+    listContainer.innerHTML = `
             <div style="margin-top: 3rem; border-top: 1px solid rgba(0,0,0,0.05); padding-top: 2rem;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
                     <h3>Archive Questions</h3>
@@ -626,150 +627,198 @@ async function renderFaqItemList() {
                 </div>
             </div>
         `;
-        document.getElementById('add-faq-item-inline')?.addEventListener('click', async () => {
-            await apiRequest('/api/admin-faq', { method: 'POST', body: JSON.stringify({ category: 'General', question: 'New?', answer: '...', is_active: true, sort_order: 10, id: 't' + Date.now() }) });
-            renderFaqItemList();
-        });
-        listContainer.querySelectorAll('.save-faq-inline').forEach(btn => btn.addEventListener('click', async (e) => {
-            const card = e.target.closest('.faq-card-inline');
-            await apiRequest('/api/admin-faq', { method: 'POST', body: JSON.stringify({ id: card.dataset.id, question: card.querySelector('.fi-q').value, category: card.querySelector('.fi-cat').value, answer: card.querySelector('.fi-a').value, sort_order: parseInt(card.querySelector('.fi-sort').value), is_active: true }) });
-            setState('Saved', 'success');
-            renderFaqItemList();
-        }));
-        listContainer.querySelectorAll('.delete-faq-inline').forEach(btn => btn.addEventListener('click', async (e) => {
-            if (confirm('Delete?')) { await apiRequest(`/api/admin-faq?id=${e.target.closest('.faq-card-inline').dataset.id}`, { method: 'DELETE' }); renderFaqItemList(); }
-        }));
-    } catch (e) {}
+    document.getElementById('add-faq-item-inline')?.addEventListener('click', async () => {
+      await apiRequest('/api/admin-faq', { method: 'POST', body: JSON.stringify({ category: 'General', question: 'New?', answer: '...', is_active: true, sort_order: 10, id: 't' + Date.now() }) });
+      renderFaqItemList();
+    });
+    listContainer.querySelectorAll('.save-faq-inline').forEach(btn => btn.addEventListener('click', async (e) => {
+      const card = e.target.closest('.faq-card-inline');
+      await apiRequest('/api/admin-faq', { method: 'POST', body: JSON.stringify({ id: card.dataset.id, question: card.querySelector('.fi-q').value, category: card.querySelector('.fi-cat').value, answer: card.querySelector('.fi-a').value, sort_order: parseInt(card.querySelector('.fi-sort').value), is_active: true }) });
+      setState('Saved', 'success');
+      renderFaqItemList();
+    }));
+    listContainer.querySelectorAll('.delete-faq-inline').forEach(btn => btn.addEventListener('click', async (e) => {
+      if (confirm('Delete?')) { await apiRequest(`/api/admin-faq?id=${e.target.closest('.faq-card-inline').dataset.id}`, { method: 'DELETE' }); renderFaqItemList(); }
+    }));
+  } catch (e) { }
 }
 
 const CONTENT_DEFINITION = [
-  { id: 'page-home', label: 'Home Page', sections: [
-    { label: 'Hero Section', fields: [
-        { key: 'home_h1', label: 'Main Headline', type: 'textarea' },
-        { key: 'home_p', label: 'Sub-headline', type: 'textarea' },
-        { key: 'home_cta', label: 'CTA Button Text', type: 'text' },
-    ]},
-    { label: 'Origin Section', fields: [
-        { key: 'home_origin_h', label: 'Origin Title', type: 'text' },
-        { key: 'home_origin_p', label: 'Origin Story', type: 'textarea' },
-    ]},
-    { label: 'Our Story', fields: [
-        { key: 'home_story_h', label: 'Story Title', type: 'text' },
-        { key: 'home_story_p', label: 'Main Narrative', type: 'textarea' },
-        { key: 'home_story_quote', label: 'Featured Quote', type: 'textarea' },
-    ]},
-    { label: 'The Craft', fields: [
-        { key: 'home_craft_h', label: 'Craft Title', type: 'text' },
-        { key: 'home_craft_p', label: 'Craft Description', type: 'textarea' },
-    ]},
-    { label: 'Waitlist', fields: [
-        { key: 'home_waitlist_h', label: 'Waitlist Title', type: 'text' },
-        { key: 'home_waitlist_p', label: 'Instruction Text', type: 'textarea' },
-    ]},
-    { label: 'Promises', fields: [
-        { key: 'promises_h2', label: 'Section Title', type: 'text' },
-        { key: 'promise_1_h', label: 'Promise 1 Title', type: 'text' },
-        { key: 'promise_1_p', label: 'Promise 1 Desc', type: 'textarea' },
-        { key: 'promise_2_h', label: 'Promise 2 Title', type: 'text' },
-        { key: 'promise_2_p', label: 'Promise 2 Desc', type: 'textarea' },
-        { key: 'promise_3_h', label: 'Promise 3 Title', type: 'text' },
-        { key: 'promise_3_p', label: 'Promise 3 Desc', type: 'textarea' },
-        { key: 'promise_4_h', label: 'Promise 4 Title', type: 'text' },
-        { key: 'promise_4_p', label: 'Promise 4 Desc', type: 'textarea' },
-    ]},
-    { label: 'Footer Global', fields: [
-        { key: 'site_title', label: 'Brand Name', type: 'text' },
-        { key: 'footer_desc', label: 'Footer About', type: 'textarea' },
-        { key: 'footer_col2_title', label: 'Col 2 Title', type: 'text' },
-        { key: 'insta_label', label: 'Insta Label', type: 'text' },
-        { key: 'footer_copy', label: 'Copyright Text', type: 'text' },
-        { key: 'footer_credit', label: 'Credit Text', type: 'text' },
-    ]}
-  ]},
-  { id: 'page-shop', label: 'Shop Page', sections: [
-    { label: 'Shop Header', fields: [
-        { key: 'shop_h1', label: 'Shop Headline', type: 'text' },
-        { key: 'shop_p', label: 'Shop Introduction', type: 'textarea' },
-    ]},
-    { label: 'Cart UI', fields: [
-        { key: 'shop_bag_title', label: 'Cart Heading', type: 'text' },
-        { key: 'shop_empty_msg', label: 'Empty Msg', type: 'text' },
-        { key: 'shop_checkout_txt', label: 'Checkout Button', type: 'text' },
-    ]}
-  ]},
-  { id: 'page-about', label: 'Our Story', sections: [
-    { label: 'About Header', fields: [
-        { key: 'about_h1', label: 'Page Title', type: 'textarea' },
-        { key: 'about_p', label: 'Manifesto Text', type: 'textarea' },
-    ]},
-    { label: 'Chapter 1', fields: [
-        { key: 'about_chap1_h2', label: 'Chapter Title', type: 'textarea' },
-        { key: 'about_chap1_p', label: 'Chapter Text', type: 'textarea' },
-        { key: 'about_quote', label: 'Featured Quote', type: 'textarea' },
-    ]},
-    { label: 'The Raw Spirit', fields: [
-        { key: 'about_raw_h2', label: 'Section Title', type: 'textarea' },
-        { key: 'about_raw_1_h', label: 'Focus 1 Title', type: 'text' },
-        { key: 'about_raw_1_p', label: 'Focus 1 Text', type: 'textarea' },
-        { key: 'about_raw_2_h', label: 'Focus 2 Title', type: 'text' },
-        { key: 'about_raw_2_p', label: 'Focus 2 Text', type: 'textarea' },
-        { key: 'about_raw_3_h', label: 'Focus 3 Title', type: 'text' },
-        { key: 'about_raw_3_p', label: 'Focus 3 Text', type: 'textarea' },
-    ]},
-    { label: 'Philosophy', fields: [
-        { key: 'about_philo_h2', label: 'Philosophy Title', type: 'textarea' },
-        { key: 'about_philo_p', label: 'Philosophy Text', type: 'textarea' },
-    ]},
-    { label: 'Impact', fields: [
-        { key: 'about_impact_h2', label: 'Impact Title', type: 'textarea' },
-        { key: 'about_impact_p', label: 'Impact Text', type: 'textarea' },
-    ]}
-  ]},
-  { id: 'page-inspiration', label: 'Inspiration', sections: [
-    { label: 'Editorial Header', fields: [
-        { key: 'insp_h1', label: 'Page Headline', type: 'text' },
-        { key: 'insp_p', label: 'Introduction Text', type: 'textarea' },
-    ]},
-    { label: 'Codex Entries', fields: [
-        { key: 'codex_1_h', label: 'Entry 1 Title', type: 'text' },
-        { key: 'codex_1_p', label: 'Entry 1 Text', type: 'textarea' },
-        { key: 'codex_2_h', label: 'Entry 2 Title', type: 'text' },
-        { key: 'codex_2_p', label: 'Entry 2 Text', type: 'textarea' },
-        { key: 'codex_3_h', label: 'Entry 3 Title', type: 'text' },
-        { key: 'codex_3_p', label: 'Entry 3 Text', type: 'textarea' },
-        { key: 'codex_4_h', label: 'Entry 4 Title', type: 'text' },
-        { key: 'codex_4_p', label: 'Entry 4 Text', type: 'textarea' },
-    ]}
-  ]},
-  { id: 'page-recipe', label: 'Recipe Details', sections: [
-    { label: 'Layout Text', fields: [
-        { key: 'recipe_header_h1', label: 'Header Mini Title', type: 'text' },
-        { key: 'recipe_ingredients_h2', label: 'Ingredients Headline', type: 'text' },
-        { key: 'recipe_back_btn', label: 'Back Button Text', type: 'text' },
-    ]}
-  ]},
-  { id: 'page-faq', label: 'FAQ Page', sections: [
-    { label: 'Header & Intro', fields: [
-        { key: 'faq_h1', label: 'FAQ Headline', type: 'text' },
-        { key: 'faq_p', label: 'FAQ Subtext', type: 'textarea' },
-    ]}
-  ]}
+  {
+    id: 'page-home', label: 'Home Page', sections: [
+      {
+        label: 'Hero Section', fields: [
+          { key: 'home_h1', label: 'Main Headline', type: 'textarea' },
+          { key: 'home_p', label: 'Sub-headline', type: 'textarea' },
+          { key: 'home_cta', label: 'CTA Button Text', type: 'text' },
+        ]
+      },
+      {
+        label: 'Origin Section', fields: [
+          { key: 'home_origin_h', label: 'Origin Title', type: 'text' },
+          { key: 'home_origin_p', label: 'Origin Story', type: 'textarea' },
+        ]
+      },
+      {
+        label: 'Our Story', fields: [
+          { key: 'home_story_h', label: 'Story Title', type: 'text' },
+          { key: 'home_story_p', label: 'Main Narrative', type: 'textarea' },
+          { key: 'home_story_quote', label: 'Featured Quote', type: 'textarea' },
+        ]
+      },
+      {
+        label: 'The Craft', fields: [
+          { key: 'home_craft_h', label: 'Craft Title', type: 'text' },
+          { key: 'home_craft_p', label: 'Craft Description', type: 'textarea' },
+        ]
+      },
+      {
+        label: 'Waitlist', fields: [
+          { key: 'home_waitlist_h', label: 'Waitlist Title', type: 'text' },
+          { key: 'home_waitlist_p', label: 'Instruction Text', type: 'textarea' },
+        ]
+      },
+      {
+        label: 'Promises', fields: [
+          { key: 'promises_h2', label: 'Section Title', type: 'text' },
+          { key: 'promise_1_h', label: 'Promise 1 Title', type: 'text' },
+          { key: 'promise_1_p', label: 'Promise 1 Desc', type: 'textarea' },
+          { key: 'promise_2_h', label: 'Promise 2 Title', type: 'text' },
+          { key: 'promise_2_p', label: 'Promise 2 Desc', type: 'textarea' },
+          { key: 'promise_3_h', label: 'Promise 3 Title', type: 'text' },
+          { key: 'promise_3_p', label: 'Promise 3 Desc', type: 'textarea' },
+          { key: 'promise_4_h', label: 'Promise 4 Title', type: 'text' },
+          { key: 'promise_4_p', label: 'Promise 4 Desc', type: 'textarea' },
+        ]
+      },
+      {
+        label: 'Footer Global', fields: [
+          { key: 'site_title', label: 'Brand Name', type: 'text' },
+          { key: 'footer_desc', label: 'Footer About', type: 'textarea' },
+          { key: 'footer_col2_title', label: 'Col 2 Title', type: 'text' },
+          { key: 'insta_label', label: 'Insta Label', type: 'text' },
+          { key: 'footer_copy', label: 'Copyright Text', type: 'text' },
+          { key: 'footer_credit', label: 'Credit Text', type: 'text' },
+        ]
+      }
+    ]
+  },
+  {
+    id: 'page-shop', label: 'Shop Page', sections: [
+      {
+        label: 'Shop Header', fields: [
+          { key: 'shop_h1', label: 'Shop Headline', type: 'text' },
+          { key: 'shop_p', label: 'Shop Introduction', type: 'textarea' },
+        ]
+      },
+      {
+        label: 'Cart UI', fields: [
+          { key: 'shop_bag_title', label: 'Cart Heading', type: 'text' },
+          { key: 'shop_empty_msg', label: 'Empty Msg', type: 'text' },
+          { key: 'shop_checkout_txt', label: 'Checkout Button', type: 'text' },
+        ]
+      }
+    ]
+  },
+  {
+    id: 'page-about', label: 'Our Story', sections: [
+      {
+        label: 'About Header', fields: [
+          { key: 'about_h1', label: 'Page Title', type: 'textarea' },
+          { key: 'about_p', label: 'Manifesto Text', type: 'textarea' },
+        ]
+      },
+      {
+        label: 'Chapter 1', fields: [
+          { key: 'about_chap1_h2', label: 'Chapter Title', type: 'textarea' },
+          { key: 'about_chap1_p', label: 'Chapter Text', type: 'textarea' },
+          { key: 'about_quote', label: 'Featured Quote', type: 'textarea' },
+        ]
+      },
+      {
+        label: 'The Raw Spirit', fields: [
+          { key: 'about_raw_h2', label: 'Section Title', type: 'textarea' },
+          { key: 'about_raw_1_h', label: 'Focus 1 Title', type: 'text' },
+          { key: 'about_raw_1_p', label: 'Focus 1 Text', type: 'textarea' },
+          { key: 'about_raw_2_h', label: 'Focus 2 Title', type: 'text' },
+          { key: 'about_raw_2_p', label: 'Focus 2 Text', type: 'textarea' },
+          { key: 'about_raw_3_h', label: 'Focus 3 Title', type: 'text' },
+          { key: 'about_raw_3_p', label: 'Focus 3 Text', type: 'textarea' },
+        ]
+      },
+      {
+        label: 'Philosophy', fields: [
+          { key: 'about_philo_h2', label: 'Philosophy Title', type: 'textarea' },
+          { key: 'about_philo_p', label: 'Philosophy Text', type: 'textarea' },
+        ]
+      },
+      {
+        label: 'Impact', fields: [
+          { key: 'about_impact_h2', label: 'Impact Title', type: 'textarea' },
+          { key: 'about_impact_p', label: 'Impact Text', type: 'textarea' },
+        ]
+      }
+    ]
+  },
+  {
+    id: 'page-inspiration', label: 'Inspiration', sections: [
+      {
+        label: 'Editorial Header', fields: [
+          { key: 'insp_h1', label: 'Page Headline', type: 'text' },
+          { key: 'insp_p', label: 'Introduction Text', type: 'textarea' },
+        ]
+      },
+      {
+        label: 'Codex Entries', fields: [
+          { key: 'codex_1_h', label: 'Entry 1 Title', type: 'text' },
+          { key: 'codex_1_p', label: 'Entry 1 Text', type: 'textarea' },
+          { key: 'codex_2_h', label: 'Entry 2 Title', type: 'text' },
+          { key: 'codex_2_p', label: 'Entry 2 Text', type: 'textarea' },
+          { key: 'codex_3_h', label: 'Entry 3 Title', type: 'text' },
+          { key: 'codex_3_p', label: 'Entry 3 Text', type: 'textarea' },
+          { key: 'codex_4_h', label: 'Entry 4 Title', type: 'text' },
+          { key: 'codex_4_p', label: 'Entry 4 Text', type: 'textarea' },
+        ]
+      }
+    ]
+  },
+  {
+    id: 'page-recipe', label: 'Recipe Details', sections: [
+      {
+        label: 'Layout Text', fields: [
+          { key: 'recipe_header_h1', label: 'Header Mini Title', type: 'text' },
+          { key: 'recipe_ingredients_h2', label: 'Ingredients Headline', type: 'text' },
+          { key: 'recipe_back_btn', label: 'Back Button Text', type: 'text' },
+        ]
+      }
+    ]
+  },
+  {
+    id: 'page-faq', label: 'FAQ Page', sections: [
+      {
+        label: 'Header & Intro', fields: [
+          { key: 'faq_h1', label: 'FAQ Headline', type: 'text' },
+          { key: 'faq_p', label: 'FAQ Subtext', type: 'textarea' },
+        ]
+      }
+    ]
+  }
 ];
 
 async function loadContentEditor() {
-    if (!moduleContent || moduleContent.classList.contains('hidden')) return;
-    setState('Syncing...', 'success');
-    try {
-        const content = await apiRequest('/api/content');
-        renderContentEditor(content);
-        setState('');
-    } catch (err) { setState('Fail'); }
+  if (!moduleContent || moduleContent.classList.contains('hidden')) return;
+  setState('Syncing...', 'success');
+  try {
+    const content = await apiRequest('/api/content');
+    renderContentEditor(content);
+    setState('');
+  } catch (err) { setState('Fail'); }
 }
 
 function renderContentEditor(data) {
-    const activePage = CONTENT_DEFINITION.find(p => p.id === currentContentSubTab) || CONTENT_DEFINITION[0];
-    const subtabsHtml = CONTENT_DEFINITION.map(page => `<button class="admin-tab-mini ${currentContentSubTab === page.id ? 'active' : ''}" data-subtab="${page.id}">${page.label}</button>`).join('');
-    const fieldsHtml = activePage.sections.map(section => `
+  const activePage = CONTENT_DEFINITION.find(p => p.id === currentContentSubTab) || CONTENT_DEFINITION[0];
+  const subtabsHtml = CONTENT_DEFINITION.map(page => `<button class="admin-tab-mini ${currentContentSubTab === page.id ? 'active' : ''}" data-subtab="${page.id}">${page.label}</button>`).join('');
+  const fieldsHtml = activePage.sections.map(section => `
         <div class="content-section-card">
             <h4 style="margin-bottom: 1.5rem; opacity: 0.5; font-size: 0.7rem; text-transform: uppercase;">${section.label}</h4>
             <div style="display: grid; gap: 1.5rem;">
@@ -778,20 +827,20 @@ function renderContentEditor(data) {
         </div>
     `).join('');
 
-    contentForm.innerHTML = `<nav class="admin-tabs-mini">${subtabsHtml}</nav><div style="display: grid; gap: 2rem;">${fieldsHtml}</div>${currentContentSubTab === 'page-faq' ? '<div id="faq-items-manager"></div>' : ''}`;
-    if (currentContentSubTab === 'page-faq') renderFaqItemList();
-    contentForm.querySelectorAll('[data-subtab]').forEach(btn => btn.addEventListener('click', () => { currentContentSubTab = btn.dataset.subtab; renderContentEditor(data); }));
+  contentForm.innerHTML = `<nav class="admin-tabs-mini">${subtabsHtml}</nav><div style="display: grid; gap: 2rem;">${fieldsHtml}</div>${currentContentSubTab === 'page-faq' ? '<div id="faq-items-manager"></div>' : ''}`;
+  if (currentContentSubTab === 'page-faq') renderFaqItemList();
+  contentForm.querySelectorAll('[data-subtab]').forEach(btn => btn.addEventListener('click', () => { currentContentSubTab = btn.dataset.subtab; renderContentEditor(data); }));
 }
 
 saveContentBtn?.addEventListener('click', async () => {
-    saveContentBtn.disabled = true; saveContentBtn.textContent = 'Syncing...';
-    const updates = {};
-    contentForm.querySelectorAll('input[name], textarea[name]').forEach(el => updates[el.name] = el.value);
-    try {
-        await apiRequest('/api/admin-content', { method: 'POST', body: JSON.stringify({ updates }) });
-        setState('Narratives synced', 'success');
-        loadContentEditor();
-    } catch (err) { setState('Sync fail'); } finally { saveContentBtn.disabled = false; saveContentBtn.textContent = 'Save All Changes'; }
+  saveContentBtn.disabled = true; saveContentBtn.textContent = 'Syncing...';
+  const updates = {};
+  contentForm.querySelectorAll('input[name], textarea[name]').forEach(el => updates[el.name] = el.value);
+  try {
+    await apiRequest('/api/admin-content', { method: 'POST', body: JSON.stringify({ updates }) });
+    setState('Narratives synced', 'success');
+    loadContentEditor();
+  } catch (err) { setState('Sync fail'); } finally { saveContentBtn.disabled = false; saveContentBtn.textContent = 'Save All Changes'; }
 });
 
 // Init
