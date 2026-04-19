@@ -23,12 +23,12 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'No valid image data provided' });
     }
 
-    // Validate size — compressed images should be well under 300KB
+    // Validate size — compressed images should be well under 1-2MB
     const base64Data = base64.split(',')[1] || '';
     const sizeBytes = Math.ceil((base64Data.length * 3) / 4);
-    const MAX_BYTES = 400 * 1024; // 400KB limit after client-side compression
+    const MAX_BYTES = 4 * 1024 * 1024; // Increase to 4MB (Vercel limit is ~4.5MB)
     if (sizeBytes > MAX_BYTES) {
-      return res.status(413).json({ error: `Image too large after compression (${Math.round(sizeBytes / 1024)}KB). Please use a smaller image.` });
+      return res.status(413).json({ error: `Image too large (${Math.round(sizeBytes / 1024)}KB). Max allowed is 4096KB.` });
     }
 
     await ensureOrdersTable();
@@ -49,7 +49,19 @@ export default async function handler(req, res) {
       [name || 'upload', base64]
     );
 
-    const mediaId = result[0]?.id || result.rows?.[0]?.id;
+    // Robust ID extraction for both local (array) and Vercel (rows object)
+    let mediaId;
+    if (Array.isArray(result) && result.length > 0) {
+      mediaId = result[0].id;
+    } else if (result && result.rows && result.rows.length > 0) {
+      mediaId = result.rows[0].id;
+    }
+
+    if (!mediaId) {
+      console.error('Database did not return ID:', result);
+      throw new Error('Database failed to generate media ID');
+    }
+
     const cleanName = (name || 'upload').replace(/[^a-zA-Z0-9._-]/g, '_').toLowerCase();
     const filename = `media_${mediaId}_${cleanName}`;
 
@@ -60,7 +72,7 @@ export default async function handler(req, res) {
       mediaId,
     });
   } catch (err) {
-    console.error('Upload Error:', err);
-    return res.status(500).json({ error: err.message || 'Upload failed' });
+    console.error('Upload Error Details:', err);
+    return res.status(500).json({ error: `Upload Failed: ${err.message}` });
   }
 }
