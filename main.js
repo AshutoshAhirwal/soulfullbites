@@ -170,7 +170,7 @@ async function loadShopProducts() {
                 <div class="product-slider" data-current="0">
                     <div class="slider-track">
                         ${images.map(img => {
-                            const src = (img.startsWith('http') || img.startsWith('blob') || img.startsWith('data')) ? img : `/assets/${img}`;
+                            const src = (img.startsWith('http') || img.startsWith('blob') || img.startsWith('data') || img.startsWith('/api/')) ? img : `/assets/${img}`;
                             return `<img src="${src}" alt="${p.name}">`;
                         }).join('')}
                     </div>
@@ -182,7 +182,7 @@ async function loadShopProducts() {
                 </div>`
                 : `
                 <div class="product-img-wrapper" style="overflow:hidden; border-radius: 1.8rem; margin-bottom: 2rem;">
-                    <img src="${(images[0].startsWith('http') || images[0].startsWith('blob') || images[0].startsWith('data')) ? images[0] : `/assets/${images[0]}`}" alt="${p.name}" class="product-img" style="margin-bottom: 0;">
+                    <img src="${(images[0].startsWith('http') || images[0].startsWith('blob') || images[0].startsWith('data') || images[0].startsWith('/api/')) ? images[0] : `/assets/${images[0]}`}" alt="${p.name}" class="product-img" style="margin-bottom: 0;">
                 </div>`;
 
             return `

@@ -1,7 +1,14 @@
-import fs from 'fs';
-import path from 'path';
 import { requireAdmin } from './_lib/auth.js';
+import { dbQuery, ensureOrdersTable } from './_lib/db.js';
 
+/**
+ * POST /api/admin-upload
+ * Accepts: { base64: "data:image/jpeg;base64,...", name: "filename.jpg" }
+ * Returns: { success: true, filename: "product_xyz_123.jpeg", path: "/api/media/123" }
+ *
+ * Images are stored in the `media` table in the database.
+ * This avoids Vercel's read-only filesystem limitation.
+ */
 export default async function handler(req, res) {
   const admin = await requireAdmin(req, res);
   if (!admin) return;
@@ -11,42 +18,49 @@ export default async function handler(req, res) {
   }
 
   try {
-    const { base64, name } = req.body;
-    if (!base64) {
-      return res.status(400).json({ error: 'No image data provided' });
+    const { base64, name } = req.body || {};
+    if (!base64 || !base64.startsWith('data:image/')) {
+      return res.status(400).json({ error: 'No valid image data provided' });
     }
 
-    // Extract the actual base64 data
-    const matches = base64.match(/^data:([A-Za-z-+/]+);base64,(.+)$/);
-    if (!matches || matches.length !== 3) {
-        return res.status(400).json({ error: 'Invalid base64 string' });
+    // Validate size — compressed images should be well under 300KB
+    const base64Data = base64.split(',')[1] || '';
+    const sizeBytes = Math.ceil((base64Data.length * 3) / 4);
+    const MAX_BYTES = 400 * 1024; // 400KB limit after client-side compression
+    if (sizeBytes > MAX_BYTES) {
+      return res.status(413).json({ error: `Image too large after compression (${Math.round(sizeBytes / 1024)}KB). Please use a smaller image.` });
     }
 
-    const data = Buffer.from(matches[2], 'base64');
-    const extension = matches[1].split('/')[1] || 'jpg';
-    
-    // Generate a clean, unique filename
-    const cleanName = (name || 'upload').replace(/[^a-z0-0]/gi, '_').toLowerCase();
-    const filename = `product_${cleanName}_${Date.now()}.${extension}`;
-    
-    // Define the path (target the public/assets directory)
-    // In local dev, we write to the actual filesystem
-    const targetDir = path.join(process.cwd(), 'public', 'assets');
-    
-    if (!fs.existsSync(targetDir)) {
-      fs.mkdirSync(targetDir, { recursive: true });
-    }
+    await ensureOrdersTable();
 
-    const filePath = path.join(targetDir, filename);
-    fs.writeFileSync(filePath, data);
+    // Ensure media table exists
+    await dbQuery(`
+      CREATE TABLE IF NOT EXISTS media (
+        id SERIAL PRIMARY KEY,
+        original_name TEXT,
+        data TEXT NOT NULL,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+      )
+    `);
 
-    return res.status(200).json({ 
-      success: true, 
-      filename: filename,
-      path: `/assets/${filename}` 
+    // Insert and return the new ID
+    const result = await dbQuery(
+      'INSERT INTO media (original_name, data) VALUES ($1, $2) RETURNING id',
+      [name || 'upload', base64]
+    );
+
+    const mediaId = result[0]?.id || result.rows?.[0]?.id;
+    const cleanName = (name || 'upload').replace(/[^a-zA-Z0-9._-]/g, '_').toLowerCase();
+    const filename = `media_${mediaId}_${cleanName}`;
+
+    return res.status(200).json({
+      success: true,
+      filename,
+      path: `/api/media/${mediaId}`,
+      mediaId,
     });
   } catch (err) {
     console.error('Upload Error:', err);
-    return res.status(500).json({ error: err.message || 'File write failed' });
+    return res.status(500).json({ error: err.message || 'Upload failed' });
   }
 }
