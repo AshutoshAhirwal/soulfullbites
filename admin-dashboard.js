@@ -406,16 +406,20 @@ window.handleRealUpload = async (input) => {
                 })
             });
 
-            if (!res.ok) throw new Error('Server upload failed');
+            if (!res.ok) throw new Error(`Server upload failed (${res.status})`);
             const data = await res.json();
+            if (!data.path) throw new Error('Server did not return an image path');
 
-            // Store just the filename, not the base64 blob
+            // Store the API path (e.g. /api/media/42) — works on Vercel and locally
             const current = imagesInput.value.split(',').map(s => s.trim()).filter(s => s && !s.startsWith('data:'));
-            current.push(data.filename);
+            current.push(data.path);
             imagesInput.value = current.join(', ');
 
+            // Update preview to the served URL
+            imgEl.src = data.path;
+
             if (btnText) btnText.textContent = '📷 Add Another Image';
-            setState('Visual asset synced', 'success');
+            setState('Image uploaded & synced ✓', 'success');
         } catch (err) {
             console.error(err);
             if (btnText) btnText.textContent = 'Upload Failed - Retry';
@@ -447,7 +451,7 @@ function renderProducts(products) {
         try { images = JSON.parse(p.images_json || '[]'); } catch(e) { images = [p.image_slug || 'chocolate_bar.png']; }
         const imageStr = images.join(', ');
         const firstImg = images[0] || 'chocolate_bar.png';
-        const firstSrc = (firstImg.startsWith('http') || firstImg.startsWith('data')) ? firstImg : `/assets/${firstImg}`;
+        const firstSrc = (firstImg.startsWith('http') || firstImg.startsWith('data') || firstImg.startsWith('/api/')) ? firstImg : `/assets/${firstImg}`;
 
         return `
         <article class="admin-card" data-product-id="${escapeHtml(p.id)}" style="margin-bottom: 2rem;">
