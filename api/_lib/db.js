@@ -128,5 +128,14 @@ export async function ensureOrdersTable() {
     )
   `);
 
+  await dbQuery(`
+    CREATE TABLE IF NOT EXISTS media (
+      id SERIAL PRIMARY KEY,
+      original_name TEXT,
+      data TEXT NOT NULL,
+      created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    )
+  `);
+
   ordersTableReady = true;
 }

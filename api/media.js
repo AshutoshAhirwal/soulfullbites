@@ -6,9 +6,15 @@ import { dbQuery, ensureOrdersTable } from './_lib/db.js';
  * The data is stored as a data: URL — we extract the binary and serve it as an image.
  */
 export default async function handler(req, res) {
-  const url = req.url || '';
-  const segments = url.split('/').filter(Boolean);
-  const id = segments[segments.length - 1]?.split('?')[0];
+  // Priority 1: req.query.id (Vercel standard)
+  // Priority 2: Last URL segment (fallback for raw calls)
+  let id = req.query?.id;
+  
+  if (!id) {
+    const url = req.url || '';
+    const segments = url.split('/').filter(Boolean);
+    id = segments[segments.length - 1]?.split('?')[0];
+  }
 
   if (!id || isNaN(Number(id))) {
     return res.status(400).json({ error: 'Invalid media ID' });

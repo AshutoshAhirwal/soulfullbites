@@ -33,33 +33,26 @@ export default async function handler(req, res) {
 
     await ensureOrdersTable();
 
-    // Ensure media table exists
-    await dbQuery(`
-      CREATE TABLE IF NOT EXISTS media (
-        id SERIAL PRIMARY KEY,
-        original_name TEXT,
-        data TEXT NOT NULL,
-        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
-      )
-    `);
-
     // Insert and return the new ID
     const result = await dbQuery(
       'INSERT INTO media (original_name, data) VALUES ($1, $2) RETURNING id',
       [name || 'upload', base64]
     );
 
-    // Robust ID extraction for both local (array) and Vercel (rows object)
-    let mediaId;
-    if (Array.isArray(result) && result.length > 0) {
-      mediaId = result[0].id;
-    } else if (result && result.rows && result.rows.length > 0) {
-      mediaId = result.rows[0].id;
+    // Deep ID extraction covering all possible return structures from Neon/Postgres drivers
+    let mediaId = null;
+    
+    if (Array.isArray(result)) {
+        mediaId = result[0]?.id;
+    } else if (result?.rows && Array.isArray(result.rows)) {
+        mediaId = result.rows[0]?.id;
+    } else if (result?.id) {
+        mediaId = result.id;
     }
 
-    if (!mediaId) {
-      console.error('Database did not return ID:', result);
-      throw new Error('Database failed to generate media ID');
+    if (!mediaId && mediaId !== 0) {
+      console.error('Debug Result Structure:', JSON.stringify(result));
+      throw new Error('Database did not return a valid Media ID after insert');
     }
 
     const cleanName = (name || 'upload').replace(/[^a-zA-Z0-9._-]/g, '_').toLowerCase();
