@@ -1,4 +1,10 @@
 {
   "cleanUrls": true,
-  "framework": "vite"
+  "framework": "vite",
+  "rewrites": [
+    {
+      "source": "/api/media/:id",
+      "destination": "/api/media.js"
+    }
+  ]
 }
