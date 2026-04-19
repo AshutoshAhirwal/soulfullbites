@@ -84,7 +84,7 @@ loginForm?.addEventListener('submit', async (e) => {
   if (btn) { btn.disabled = true; btn.textContent = 'Authenticating...'; }
 
   try {
-    await apiRequest('/api/admin-login', {
+    await apiRequest('/api/admin-auth', {
       method: 'POST',
       body: JSON.stringify({ password: passwordInput.value })
     });
@@ -100,7 +100,7 @@ loginForm?.addEventListener('submit', async (e) => {
 // Logout Handler
 logoutBtn?.addEventListener('click', async () => {
   try {
-    await apiRequest('/api/admin-logout', { method: 'POST' });
+    await apiRequest('/api/admin-auth', { method: 'DELETE' });
     showLogin();
   } catch (err) { setState('Logout failed'); }
 });
@@ -340,7 +340,7 @@ function renderOrders(orders) {
 
 window.updateOrderStatus = async (id, status) => {
   try {
-    await apiRequest('/api/admin-order-update', { method: 'PATCH', body: JSON.stringify({ id, status }) });
+    await apiRequest('/api/admin-orders', { method: 'PATCH', body: JSON.stringify({ id, status }) });
     loadOrders();
     setState('Status updated', 'success');
   } catch (err) { setState('Update failed'); }
@@ -586,7 +586,7 @@ async function renderFaqItemList() {
   const listContainer = document.getElementById('faq-items-manager');
   if (!listContainer) return;
   try {
-    const faqs = await apiRequest('/api/admin-faq');
+    const faqs = await apiRequest('/api/admin-cms?section=faq');
     listContainer.innerHTML = `
             <div style="margin-top: 3rem; border-top: 1px solid rgba(0,0,0,0.05); padding-top: 2rem;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
@@ -628,17 +628,17 @@ async function renderFaqItemList() {
             </div>
         `;
     document.getElementById('add-faq-item-inline')?.addEventListener('click', async () => {
-      await apiRequest('/api/admin-faq', { method: 'POST', body: JSON.stringify({ category: 'General', question: 'New?', answer: '...', is_active: true, sort_order: 10, id: 't' + Date.now() }) });
+      await apiRequest('/api/admin-cms?section=faq', { method: 'POST', body: JSON.stringify({ category: 'General', question: 'New?', answer: '...', is_active: true, sort_order: 10, id: 't' + Date.now() }) });
       renderFaqItemList();
     });
     listContainer.querySelectorAll('.save-faq-inline').forEach(btn => btn.addEventListener('click', async (e) => {
       const card = e.target.closest('.faq-card-inline');
-      await apiRequest('/api/admin-faq', { method: 'POST', body: JSON.stringify({ id: card.dataset.id, question: card.querySelector('.fi-q').value, category: card.querySelector('.fi-cat').value, answer: card.querySelector('.fi-a').value, sort_order: parseInt(card.querySelector('.fi-sort').value), is_active: true }) });
+      await apiRequest('/api/admin-cms?section=faq', { method: 'POST', body: JSON.stringify({ id: card.dataset.id, question: card.querySelector('.fi-q').value, category: card.querySelector('.fi-cat').value, answer: card.querySelector('.fi-a').value, sort_order: parseInt(card.querySelector('.fi-sort').value), is_active: true }) });
       setState('Saved', 'success');
       renderFaqItemList();
     }));
     listContainer.querySelectorAll('.delete-faq-inline').forEach(btn => btn.addEventListener('click', async (e) => {
-      if (confirm('Delete?')) { await apiRequest(`/api/admin-faq?id=${e.target.closest('.faq-card-inline').dataset.id}`, { method: 'DELETE' }); renderFaqItemList(); }
+      if (confirm('Delete?')) { await apiRequest(`/api/admin-cms?section=faq&id=${e.target.closest('.faq-card-inline').dataset.id}`, { method: 'DELETE' }); renderFaqItemList(); }
     }));
   } catch (e) { }
 }
@@ -837,7 +837,7 @@ saveContentBtn?.addEventListener('click', async () => {
   const updates = {};
   contentForm.querySelectorAll('input[name], textarea[name]').forEach(el => updates[el.name] = el.value);
   try {
-    await apiRequest('/api/admin-content', { method: 'POST', body: JSON.stringify({ updates }) });
+    await apiRequest('/api/admin-cms', { method: 'POST', body: JSON.stringify({ updates }) });
     setState('Narratives synced', 'success');
     loadContentEditor();
   } catch (err) { setState('Sync fail'); } finally { saveContentBtn.disabled = false; saveContentBtn.textContent = 'Save All Changes'; }

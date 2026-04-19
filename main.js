@@ -242,7 +242,7 @@ async function loadPageFaqs() {
     if (!container) return;
 
     try {
-        const res = await fetch('/api/faq');
+        const res = await fetch('/api/content?section=faq');
         if (!res.ok) throw new Error('Failed to fetch FAQs');
         const faqs = await res.json();
 
