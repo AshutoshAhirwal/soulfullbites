@@ -46,8 +46,23 @@ function localApiPlugin() {
           return next();
         }
 
-        const modulePath = requestPath.endsWith('.js') ? requestPath : `${requestPath}.js`;
-        const apiFilePath = path.join(process.cwd(), modulePath.slice(1));
+        // First try exact match: /api/foo -> api/foo.js
+        let modulePath = requestPath.endsWith('.js') ? requestPath : `${requestPath}.js`;
+        let apiFilePath = path.join(process.cwd(), modulePath.slice(1));
+
+        // If exact not found, try parent segment: /api/media/4 -> api/media.js
+        if (!existsSync(apiFilePath)) {
+          const segments = requestPath.split('/').filter(Boolean); // ['api', 'media', '4']
+          if (segments.length >= 3) {
+            const parentPath = '/' + segments.slice(0, -1).join('/'); // /api/media
+            const parentModule = `${parentPath}.js`;
+            const parentFile = path.join(process.cwd(), parentModule.slice(1));
+            if (existsSync(parentFile)) {
+              modulePath = parentModule;
+              apiFilePath = parentFile;
+            }
+          }
+        }
 
         if (!existsSync(apiFilePath)) {
           return next();
