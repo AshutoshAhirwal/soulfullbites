@@ -101,6 +101,7 @@ export async function ensureOrdersTable() {
       description TEXT NOT NULL,
       price INTEGER NOT NULL,
       image_slug TEXT NOT NULL DEFAULT 'chocolate_bar.png',
+      images_json TEXT NOT NULL DEFAULT '["chocolate_bar.png"]',
       flavor_note TEXT,
       ingredients TEXT,
       is_active BOOLEAN NOT NULL DEFAULT TRUE,
@@ -108,6 +109,12 @@ export async function ensureOrdersTable() {
       updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
     )
   `);
+
+  try {
+    await dbQuery("ALTER TABLE products ADD COLUMN IF NOT EXISTS images_json TEXT NOT NULL DEFAULT '[\"chocolate_bar.png\"]'");
+    await dbQuery("ALTER TABLE products ADD COLUMN IF NOT EXISTS flavor_note TEXT");
+    await dbQuery("ALTER TABLE products ADD COLUMN IF NOT EXISTS ingredients TEXT");
+  } catch (e) { console.warn('Products migration warning:', e.message); }
 
   await dbQuery(`
     CREATE TABLE IF NOT EXISTS faq_items (

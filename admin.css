@@ -425,7 +425,11 @@
     .admin-login-card,
     .admin-order-card,
     .admin-filters {
-        grid-template-columns: 1fr;
+        grid-template-columns: 1fr !important;
+    }
+
+    .admin-card > div[style*="grid-template-columns"] {
+        grid-template-columns: 1fr !important;
     }
 
     .admin-brand {
@@ -559,6 +563,20 @@
     color: var(--cream);
     border-color: var(--choc-dark);
     box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.admin-prod-sidebar {
+    display: flex;
+    flex-direction: column;
+}
+
+.admin-prod-preview {
+    transition: transform 0.3s ease;
+    box-shadow: 0 8px 24px rgba(74, 44, 26, 0.05);
+}
+
+.admin-prod-preview:hover {
+    transform: scale(1.02);
 }
 
 .content-section-card {

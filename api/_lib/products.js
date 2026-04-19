@@ -21,21 +21,23 @@ export async function upsertProduct(product) {
 
   await ensureOrdersTable();
 
-  const { id, name, description, price, image_slug, flavor_note, ingredients, is_active } = product;
+  const { id, name, description, price, image_slug, images_json, flavor_note, ingredients, is_active } = product;
+  const images = images_json || JSON.stringify([image_slug || 'chocolate_bar.png']);
   
   await dbQuery(`
-    INSERT INTO products (id, name, description, price, image_slug, flavor_note, ingredients, is_active, updated_at)
-    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW())
+    INSERT INTO products (id, name, description, price, image_slug, images_json, flavor_note, ingredients, is_active, updated_at)
+    VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW())
     ON CONFLICT (id) DO UPDATE SET 
       name = $2, 
       description = $3, 
       price = $4, 
       image_slug = $5, 
-      flavor_note = $6,
-      ingredients = $7,
-      is_active = $8, 
+      images_json = $6,
+      flavor_note = $7,
+      ingredients = $8,
+      is_active = $9, 
       updated_at = NOW()
-  `, [id, name, description, price, image_slug, flavor_note, ingredients, is_active]);
+  `, [id, name, description, price, image_slug, images, flavor_note, ingredients, is_active]);
   
   return product;
 }

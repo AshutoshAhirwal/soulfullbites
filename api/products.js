@@ -5,6 +5,11 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
+  // Prevent caching of product data
+  res.setHeader('Cache-Control', 'no-store, must-revalidate, max-age=0');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+
   try {
     await seedProducts(); // Ensure defaults exist
     const products = await getProducts();

@@ -153,6 +153,51 @@ document.querySelectorAll('#admin-tabs button').forEach(btn => {
     });
 });
 
+// Export CSV Logic
+document.getElementById('admin-export-csv')?.addEventListener('click', () => {
+    if (!cachedOrders || cachedOrders.length === 0) {
+        setState('No order data available for export');
+        return;
+    }
+
+    const headers = ['ID', 'Customer', 'Email', 'Phone', 'Address', 'Amount', 'Status', 'Payment Status', 'Items'];
+    const rows = cachedOrders.map(o => [
+        o.id,
+        o.customerName,
+        o.customerEmail,
+        o.customerPhone,
+        o.customerAddress,
+        o.totalAmount,
+        o.status,
+        o.paymentStatus,
+        (o.items || []).map(i => `${i.name}(${i.quantity})`).join('; ')
+    ]);
+
+    const csvBody = [
+        headers.join(','),
+        ...rows.map(row => row.map(cell => `"${(cell || '').toString().replace(/"/g, '""')}"`).join(','))
+    ].join('\n');
+
+    const BOM = '\ufeff';
+    const blob = new Blob([BOM + csvBody], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    
+    const date = new Date().toISOString().split('T')[0];
+    link.download = `soulfullbites_orders_${date}.csv`;
+    
+    document.body.appendChild(link);
+    link.click();
+    
+    setTimeout(() => {
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+    }, 100);
+    
+    setState('Registry exported to CSV', 'success');
+});
+
 // Global Module Switching
 function switchModule(moduleName) {
     document.querySelectorAll('[data-module]').forEach(btn => {
@@ -302,6 +347,84 @@ window.updateOrderStatus = async (id, status) => {
 }
 
 // Product Logic
+async function compressImage(base64, maxWidth = 1200, quality = 0.8) {
+    return new Promise((resolve) => {
+        const img = new Image();
+        img.src = base64;
+        img.onload = () => {
+            const canvas = document.createElement('canvas');
+            let width = img.width;
+            let height = img.height;
+
+            if (width > maxWidth) {
+                height = (maxWidth / width) * height;
+                width = maxWidth;
+            }
+
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, width, height);
+            resolve(canvas.toDataURL('image/jpeg', quality));
+        };
+    });
+}
+
+window.handleRealUpload = async (input) => {
+    const file = input.files[0];
+    if (!file) return;
+    
+    const container = input.closest('article');
+    if (!container) return console.error('Upload: could not find parent card');
+
+    const imgEl = container.querySelector('.admin-prod-preview img');
+    const imagesInput = container.querySelector('.prod-images');
+    const btnText = container.querySelector('.upload-btn-text');
+
+    if (btnText) btnText.textContent = 'Optimizing...';
+
+    const reader = new FileReader();
+    reader.onload = async (e) => {
+        try {
+            const rawBase64 = e.target.result;
+            
+            // Optimize first for performance
+            const optimizedBase64 = await compressImage(rawBase64);
+            
+            // Show local preview immediately (good UX)
+            imgEl.src = optimizedBase64;
+
+            if (btnText) btnText.textContent = 'Uploading...';
+
+            // Send to server
+            const res = await fetch('/api/admin-upload', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    base64: optimizedBase64, 
+                    name: file.name 
+                })
+            });
+
+            if (!res.ok) throw new Error('Server upload failed');
+            const data = await res.json();
+
+            // Store just the filename, not the base64 blob
+            const current = imagesInput.value.split(',').map(s => s.trim()).filter(s => s && !s.startsWith('data:'));
+            current.push(data.filename);
+            imagesInput.value = current.join(', ');
+
+            if (btnText) btnText.textContent = '📷 Add Another Image';
+            setState('Visual asset synced', 'success');
+        } catch (err) {
+            console.error(err);
+            if (btnText) btnText.textContent = 'Upload Failed - Retry';
+            setState('Upload failed: ' + err.message);
+        }
+    };
+    reader.readAsDataURL(file);
+}
+
 async function loadProducts() {
     if (!moduleProducts || moduleProducts.classList.contains('hidden')) return;
     setState('Catalog loading...', 'success');
@@ -319,55 +442,78 @@ function renderProducts(products) {
         return;
     }
 
-    productList.innerHTML = products.map(p => `
+    productList.innerHTML = products.map(p => {
+        let images = [];
+        try { images = JSON.parse(p.images_json || '[]'); } catch(e) { images = [p.image_slug || 'chocolate_bar.png']; }
+        const imageStr = images.join(', ');
+        const firstImg = images[0] || 'chocolate_bar.png';
+        const firstSrc = (firstImg.startsWith('http') || firstImg.startsWith('data')) ? firstImg : `/assets/${firstImg}`;
+
+        return `
         <article class="admin-card" data-product-id="${escapeHtml(p.id)}" style="margin-bottom: 2rem;">
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 3rem;">
+            <div style="display: grid; grid-template-columns: 240px 1fr 1fr; gap: 2.5rem;">
+                <div class="admin-prod-sidebar" style="background: rgba(74, 44, 26, 0.02); padding: 1.5rem; border-radius: 2rem;">
+                    <p class="admin-kicker" style="font-size: 0.6rem; margin-bottom: 1rem;">Visual Stacks</p>
+                    <div class="admin-prod-preview" style="width: 100%; aspect-ratio: 1; background: #fff; border-radius: 1.5rem; overflow: hidden; border: 1px solid rgba(0,0,0,0.05); display: flex; align-items: center; justify-content: center; position: relative;">
+                        <img src="${firstSrc}" alt="Preview" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.src='https://placehold.co/400x400?text=Upload+Error'">
+                        <div class="upload-overlay" style="position: absolute; bottom: 0; width: 100%; padding: 0.8rem; background: rgba(255,255,255,0.9); backdrop-filter: blur(4px); text-align: center; border-top: 1px solid rgba(0,0,0,0.05);">
+                             <label style="font-size: 0.65rem; font-weight: 700; cursor: pointer; color: var(--choc-dark);">
+                                <span class="upload-btn-text">📷 Add New Image</span>
+                                <input type="file" class="prod-file-real" accept="image/*" style="display: none;" onchange="handleRealUpload(this)">
+                             </label>
+                        </div>
+                    </div>
+                    <label class="admin-field" style="margin-top: 1.5rem;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem;">
+                            <span>Visual Asset List</span>
+                            <button onclick="this.closest('article').querySelector('.prod-images').value=''; this.closest('article').querySelector('.prod-images').dispatchEvent(new Event('input'))" style="background:none; border:none; color:#9d3030; font-size: 0.6rem; cursor:pointer; text-decoration: underline;">Clear All</button>
+                        </div>
+                        <input type="text" class="prod-images" value="${escapeHtml(imageStr)}" placeholder="Filenames or URLs" oninput="const first = this.value.split(',')[0].trim(); this.closest('article').querySelector('.admin-prod-preview img').src = (first.startsWith('http') || first.startsWith('data')) ? first : '/assets/'+(first || 'chocolate_bar.png')">
+                        <p style="font-size: 0.6rem; opacity: 0.6; margin-top: 0.5rem; line-height: 1.4;">• Use the button above to upload files<br>• Or paste external Image URLs</p>
+                    </label>
+                </div>
                 <div>
+                   <p class="admin-kicker" style="font-size: 0.6rem; margin-bottom: 1rem;">Primary Data</p>
                    <label class="admin-field">
                         <span>Product Name</span>
                         <input type="text" class="prod-name" value="${escapeHtml(p.name)}">
                    </label>
                    <label class="admin-field">
                         <span>Description</span>
-                        <textarea class="prod-desc" style="min-height: 80px;">${escapeHtml(p.description)}</textarea>
+                        <textarea class="prod-desc" style="min-height: 100px;">${escapeHtml(p.description)}</textarea>
                    </label>
-                   <label class="admin-field">
-                        <span>Ingredients</span>
-                        <textarea class="prod-ingredients" style="min-height: 60px; font-size: 0.8rem;">${escapeHtml(p.ingredients || '')}</textarea>
-                   </label>
-                </div>
-                <div>
-                   <div style="display: flex; gap: 1rem;">
-                        <label class="admin-field" style="flex: 1;">
-                             <span>Price (₹)</span>
-                             <input type="number" class="prod-price" value="${p.price}">
-                        </label>
-                        <label class="admin-field" style="flex: 1;">
-                             <span>Image Slug</span>
-                             <input type="text" class="prod-image" value="${escapeHtml(p.image_slug || 'chocolate_bar.png')}">
-                        </label>
-                   </div>
                    <label class="admin-field">
                         <span>Flavor Kicker</span>
                         <input type="text" class="prod-flavor" value="${escapeHtml(p.flavor_note || '')}">
                    </label>
-                   <div style="display: flex; gap: 1rem; align-items: flex-end;">
-                        <label class="admin-field" style="flex: 1;">
+                </div>
+                <div>
+                   <p class="admin-kicker" style="font-size: 0.6rem; margin-bottom: 1rem;">Specifications</p>
+                   <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <label class="admin-field">
+                             <span>Price (₹)</span>
+                             <input type="number" class="prod-price" value="${p.price}">
+                        </label>
+                        <label class="admin-field">
                              <span>Visibility</span>
                              <select class="prod-active" style="border-color: ${p.is_active ? '#2d6e4b' : '#999'}">
                                  <option value="true" ${p.is_active ? 'selected' : ''}>Active</option>
                                  <option value="false" ${!p.is_active ? 'selected' : ''}>Hidden</option>
                              </select>
                         </label>
-                        <div style="display: flex; gap: 0.5rem; padding-bottom: 0.5rem;">
-                             <button class="admin-primary-btn prod-save">Save</button>
-                             <button class="admin-ghost-btn prod-delete" style="color: #9d3030;">✕</button>
-                        </div>
+                   </div>
+                   <label class="admin-field">
+                        <span>Ingredients</span>
+                        <textarea class="prod-ingredients" style="min-height: 85px; font-size: 0.8rem;">${escapeHtml(p.ingredients || '')}</textarea>
+                   </label>
+                   <div style="display: flex; gap: 0.5rem; justify-content: flex-end; margin-top: 1rem;">
+                        <button class="admin-primary-btn prod-save" style="flex: 1;">Save Changes</button>
+                        <button class="admin-ghost-btn prod-delete" style="color: #9d3030;">✕</button>
                    </div>
                 </div>
             </div>
         </article>
-    `).join('');
+    `; }).join('');
 }
 
 productList?.addEventListener('click', async (e) => {
@@ -378,20 +524,35 @@ productList?.addEventListener('click', async (e) => {
     if (e.target.classList.contains('prod-save')) {
         const btn = e.target;
         btn.disabled = true; btn.textContent = 'Saving...';
+        const imgInput = card.querySelector('.prod-images').value;
+        
+        // Parse image URLs/data (now all from upload endpoint, so all valid)
+        const imgArray = imgInput.split(',')
+            .map(s => s.trim())
+            .filter(s => s); // Just filter empty strings, keep all URLs/data
+
         try {
-            await apiRequest('/api/admin-products', { method: 'POST', body: JSON.stringify({
+            const saveData = {
                 id,
                 name: card.querySelector('.prod-name').value,
                 description: card.querySelector('.prod-desc').value,
                 ingredients: card.querySelector('.prod-ingredients').value,
                 price: parseInt(card.querySelector('.prod-price').value),
-                image_slug: card.querySelector('.prod-image').value,
+                image_slug: imgArray[0] || 'chocolate_bar.png',
+                images_json: JSON.stringify(imgArray),
                 flavor_note: card.querySelector('.prod-flavor').value,
                 is_active: card.querySelector('.prod-active').value === 'true'
-            })});
+            };
+            
+            console.log('Saving product:', { id, imageCount: imgArray.length, firstImageType: imgArray[0]?.substring(0, 30) });
+            
+            await apiRequest('/api/admin-products', { 
+                method: 'POST', 
+                body: JSON.stringify(saveData)
+            });;
             setState('Catalog synced', 'success');
             loadProducts();
-        } catch (err) { setState(err.message || 'Sync failed'); } finally { btn.disabled = false; btn.textContent = 'Save'; }
+        } catch (err) { setState(err.message || 'Sync failed'); } finally { btn.disabled = false; btn.textContent = 'Save Changes'; }
     }
 
     if (e.target.classList.contains('prod-delete')) {
@@ -405,11 +566,13 @@ productList?.addEventListener('click', async (e) => {
 });
 
 addProductBtn?.addEventListener('click', async () => {
+    const name = prompt('Product Name?', 'New Artisanal Bar');
+    if (!name) return;
     const id = 'p' + Date.now();
     try {
-        await apiRequest('/api/admin-products', { method: 'POST', body: JSON.stringify({ id, name: 'New Artisanal Bar', description: 'Description...', ingredients: '...', price: 450, image_slug: 'chocolate_bar.png', flavor_note: 'Notes', is_active: true }) });
+        await apiRequest('/api/admin-products', { method: 'POST', body: JSON.stringify({ id, name, description: 'Enter description...', ingredients: '...', price: 450, image_slug: 'chocolate_bar.png', flavor_note: 'Flavor notes', is_active: true }) });
         loadProducts();
-        setState('Added', 'success');
+        setState('Added to catalog', 'success');
     } catch (err) { setState('Fail'); }
 });
 

@@ -5,6 +5,11 @@ export default async function handler(req, res) {
   const admin = await requireAdmin(req, res);
   if (!admin) return;
 
+  // Prevent caching of product data
+  res.setHeader('Cache-Control', 'no-store, must-revalidate, max-age=0');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+
   try {
     if (req.method === 'GET') {
       const products = await getProducts(true);

@@ -131,17 +131,16 @@ async function applyDynamicContent() {
         });
     }
 
-    // Load shop products if on shop page
-    if (document.getElementById('shop-grid')) {
-        await loadShopProducts();
-    }
-
-    // Load FAQ items if on FAQ page
-    if (document.querySelector('.faq-accordion')) {
-        await loadPageFaqs();
-    }
-  } catch (err) {
+    } catch (err) {
     console.warn('CMS skip:', err);
+  }
+
+  // INDEPENDENT LOADING: These should run regardless of CMS content fetch results
+  if (document.getElementById('shop-grid')) {
+      await loadShopProducts();
+  }
+  if (document.querySelector('.faq-accordion')) {
+      await loadPageFaqs();
   }
 }
 
@@ -150,7 +149,9 @@ async function loadShopProducts() {
     if (!grid) return;
 
     try {
-        const res = await fetch('/api/products');
+        // Add cache-busting query parameter to force fresh product data
+        const timestamp = new Date().getTime();
+        const res = await fetch(`/api/products?t=${timestamp}`);
         if (!res.ok) throw new Error('Failed to fetch products');
         const products = await res.json();
 
@@ -159,18 +160,81 @@ async function loadShopProducts() {
             return;
         }
 
-        grid.innerHTML = products.map(p => `
-            <div class="product-card" data-id="${p.id}" data-name="${p.name}" data-price="${p.price}">
-                <img src="/assets/${p.image_slug || 'chocolate_bar.png'}" alt="${p.name}" class="product-img">
-                <h3>${p.name}</h3>
-                <span class="price">₹${p.price.toFixed(2)}</span>
-                <button class="btn-buy">Add to Bag</button>
-                <p class="flavor-desc" style="font-size: 0.8rem; margin-top: 1rem; color: var(--text-light);">${p.flavor_note || p.description}</p>
-            </div>
-        `).join('');
+        grid.innerHTML = products.map(p => {
+            let images = [];
+            try { images = JSON.parse(p.images_json || '[]'); } catch(e) { images = [p.image_slug || 'chocolate_bar.png']; }
+            if (images.length === 0) images = ['chocolate_bar.png'];
+
+            const imageHtml = images.length > 1 
+                ? `
+                <div class="product-slider" data-current="0">
+                    <div class="slider-track">
+                        ${images.map(img => {
+                            const src = (img.startsWith('http') || img.startsWith('blob') || img.startsWith('data')) ? img : `/assets/${img}`;
+                            return `<img src="${src}" alt="${p.name}">`;
+                        }).join('')}
+                    </div>
+                    <div class="slider-nav">
+                        ${images.map((_, i) => `<div class="slider-dot ${i === 0 ? 'active' : ''}" data-index="${i}"></div>`).join('')}
+                    </div>
+                    <div class="slider-arrow prev">←</div>
+                    <div class="slider-arrow next">→</div>
+                </div>`
+                : `
+                <div class="product-img-wrapper" style="overflow:hidden; border-radius: 1.8rem; margin-bottom: 2rem;">
+                    <img src="${(images[0].startsWith('http') || images[0].startsWith('blob') || images[0].startsWith('data')) ? images[0] : `/assets/${images[0]}`}" alt="${p.name}" class="product-img" style="margin-bottom: 0;">
+                </div>`;
+
+            return `
+                <div class="product-card" data-id="${p.id}" data-name="${p.name}" data-price="${p.price}">
+                    ${imageHtml}
+                    <h3>${p.name}</h3>
+                    <span class="price">₹${p.price.toFixed(2)}</span>
+                    <button class="btn-buy">Add to Bag</button>
+                    <p class="flavor-desc" style="font-size: 0.8rem; margin-top: 1rem; color: var(--text-light);">${p.flavor_note || p.description}</p>
+                </div>
+            `;
+        }).join('');
+
+        initProductSliders();
     } catch (err) {
         console.error('Shop load error:', err);
     }
+}
+
+function initProductSliders() {
+    document.querySelectorAll('.product-slider').forEach(slider => {
+        const track = slider.querySelector('.slider-track');
+        const dots = slider.querySelectorAll('.slider-dot');
+        const arrows = slider.querySelectorAll('.slider-arrow');
+        let current = 0;
+        const count = dots.length;
+
+        const update = () => {
+            track.style.transform = `translateX(-${current * 100}%)`;
+            dots.forEach((dot, i) => dot.classList.toggle('active', i === current));
+        };
+
+        arrows.forEach(arrow => {
+            arrow.addEventListener('click', (e) => {
+                e.stopPropagation();
+                if (arrow.classList.contains('next')) {
+                    current = (current + 1) % count;
+                } else {
+                    current = (current - 1 + count) % count;
+                }
+                update();
+            });
+        });
+
+        dots.forEach(dot => {
+            dot.addEventListener('click', (e) => {
+                e.stopPropagation();
+                current = parseInt(dot.dataset.index);
+                update();
+            });
+        });
+    });
 }
 
 async function loadPageFaqs() {
