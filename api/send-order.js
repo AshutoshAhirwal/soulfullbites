@@ -1,5 +1,6 @@
 import { Resend } from 'resend';
 import { buildOrderRecord, createOrder, markOrderCustomerEmail } from './_lib/orders.js';
+import { hasFilledHoneypot, verifyTurnstile } from './_lib/security.js';
 
 const WAITLIST_SOURCE = 'SoulfullBites Waitlist';
 const DEFAULT_OWNER_EMAILS = ['ashutosh15798@gmail.com'];
@@ -50,24 +51,6 @@ const isTestingSender = (value) => /@resend\.dev>?$/i.test(cleanText(value));
 const isAllowedTestRecipient = (email, allowedList) => allowedList.some((entry) => entry.toLowerCase() === email.toLowerCase());
 const filterTestingRecipients = (emails, allowedList) => emails.filter((email) => isAllowedTestRecipient(email, allowedList));
 
-const verifyTurnstile = async (token) => {
-  const secretKey = process.env.TURNSTILE_SECRET_KEY;
-  if (!secretKey) return true;
-  if (!token) return false;
-
-  try {
-    const response = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: `secret=${encodeURIComponent(secretKey)}&response=${encodeURIComponent(token)}`,
-    });
-    const outcome = await response.json();
-    return outcome.success;
-  } catch {
-    return false;
-  }
-};
-
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
@@ -109,8 +92,8 @@ export default async function handler(req, res) {
     hp_data,
   } = req.body ?? {};
 
-  if (cleanText(hp_data)) {
-    return res.status(200).json({ success: true, message: 'Waitlist saved' });
+  if (hasFilledHoneypot(hp_data)) {
+    return res.status(200).json({ success: true, message: 'Insider signup saved' });
   }
 
   const isHuman = await verifyTurnstile(security_token);
@@ -141,10 +124,10 @@ export default async function handler(req, res) {
         from: orderFromEmail,
         to: ownerRecipients,
         reply_to: safeEmail,
-        subject: 'New waitlist signup',
+        subject: 'New insider signup',
         html: `
           <div style="background-color: #fdf6ee; padding: 40px; font-family: 'Helvetica', sans-serif; color: #4a2c1a;">
-            <h2 style="border-bottom: 2px solid #4a2c1a; padding-bottom: 10px;">NEW WAITLIST SIGNUP</h2>
+            <h2 style="border-bottom: 2px solid #4a2c1a; padding-bottom: 10px;">NEW INSIDER SIGNUP</h2>
             <p><strong>Email:</strong> ${escapeHtml(safeEmail)}</p>
             <p><strong>Source:</strong> ${escapeHtml(safeSource)}</p>
           </div>
@@ -177,14 +160,14 @@ export default async function handler(req, res) {
         return res.status(200).json({
           success: true,
           customerEmailSkipped: true,
-          message: 'Waitlist saved. Customer email is skipped until a sending domain is verified.',
+          message: 'Insider signup saved. Customer email is skipped until a sending domain is verified.',
         });
       }
 
       await resend.emails.send({
         from: customerFromEmail,
         to: [safeEmail],
-        subject: 'SoulfullBites | You are on the waitlist',
+        subject: 'SoulfullBites | You are on the insider list',
         html: `
           <div style="background-color: #fdf6ee; padding: 40px; font-family: 'Georgia', serif; color: #4a2c1a; text-align: center; border-radius: 15px;">
             <h1 style="text-transform: uppercase; letter-spacing: 5px; font-weight: 300;">SoulfullBites</h1>
@@ -196,7 +179,7 @@ export default async function handler(req, res) {
         `,
       });
 
-      return res.status(200).json({ success: true, message: 'Waitlist emails sent successfully' });
+      return res.status(200).json({ success: true, message: 'You are on the insider list.' });
     }
 
     if (!safeName || !isValidEmail(safeEmail) || !safePhone || !safeAddress || !safeItems || !safeTotal) {

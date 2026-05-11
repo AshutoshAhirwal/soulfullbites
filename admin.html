@@ -7,147 +7,390 @@
     <link rel="icon" type="image/png" href="/assets/logo.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,400&family=Outfit:wght@200;400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;1,400&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="./style.css">
     <link rel="stylesheet" href="./admin.css">
+    <style>
+      /* ── Compact Admin Shell ── */
+      .admin-body { background: #f7f0e8; min-height: 100vh; }
+
+      /* Sticky Top Bar */
+      .admin-topbar {
+        position: sticky; top: 0; z-index: 100;
+        background: rgba(255,252,248,0.95); backdrop-filter: blur(12px);
+        border-bottom: 1px solid rgba(74,44,26,0.1);
+        display: flex; align-items: center; gap: 1rem;
+        padding: 0 1.5rem; height: 56px;
+      }
+      .admin-topbar-brand {
+        font-family: 'Cormorant Garamond', serif; font-size: 1.15rem;
+        color: #3d2518; font-weight: 600; text-decoration: none;
+        display: flex; align-items: center; gap: 0.5rem; flex-shrink: 0;
+      }
+      .admin-topbar-brand img { width: 28px; height: 28px; border-radius: 6px; }
+      .admin-topbar-divider { width: 1px; height: 24px; background: rgba(74,44,26,0.15); flex-shrink: 0; }
+      .admin-topbar-nav { display: flex; gap: 0.25rem; flex: 1; overflow-x: auto; }
+      .admin-topbar-tab {
+        padding: 0.4rem 1rem; border-radius: 6px; border: none; background: none;
+        font-family: 'Outfit', sans-serif; font-size: 0.83rem; font-weight: 500;
+        color: #7a6a60; cursor: pointer; white-space: nowrap; transition: all 0.15s;
+        display: flex; align-items: center; gap: 0.4rem;
+      }
+      .admin-topbar-tab:hover { background: rgba(74,44,26,0.06); color: #3d2518; }
+      .admin-topbar-tab.active { background: #3d2518; color: #f7ede0; }
+      .admin-topbar-tab .tab-count {
+        font-size: 0.68rem; background: rgba(255,255,255,0.2);
+        padding: 1px 6px; border-radius: 10px; font-weight: 600;
+      }
+      .admin-topbar-tab:not(.active) .tab-count { background: rgba(74,44,26,0.1); color: #7a6a60; }
+      .admin-topbar-right { display: flex; gap: 0.5rem; align-items: center; flex-shrink: 0; }
+
+      /* Page Content */
+      .admin-page { max-width: 1200px; margin: 0 auto; padding: 1.5rem; }
+
+      /* Module Header Row */
+      .admin-module-header {
+        display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem;
+        flex-wrap: wrap;
+      }
+      .admin-module-title { font-family: 'Outfit',sans-serif; font-size: 1.1rem; font-weight: 600; color: #2d1a12; flex: 1; }
+      .admin-module-sub { font-size: 0.78rem; color: #9a8678; font-weight: 400; display: block; }
+
+      /* Filter Bar */
+      .admin-filterbar {
+        display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap;
+        padding: 0.75rem 1rem; background: #fff; border-radius: 10px;
+        border: 1px solid rgba(74,44,26,0.1); margin-bottom: 1rem;
+      }
+      .admin-filterbar input[type="search"],
+      .admin-filterbar select {
+        height: 34px; padding: 0 0.75rem; border-radius: 6px;
+        border: 1px solid rgba(74,44,26,0.15); font-family: 'Outfit',sans-serif;
+        font-size: 0.82rem; color: #3d2518; background: #faf7f4;
+        outline: none; transition: border-color 0.15s;
+      }
+      .admin-filterbar input[type="search"] { min-width: 200px; flex: 1; }
+      .admin-filterbar input[type="search"]:focus,
+      .admin-filterbar select:focus { border-color: #8b5e2a; }
+      .admin-filterbar select { cursor: pointer; }
+      .admin-filterbar-sep { width: 1px; height: 22px; background: rgba(74,44,26,0.1); }
+      .admin-chip-row { display: flex; gap: 0.4rem; flex-wrap: wrap; margin-bottom: 1rem; }
+      .admin-chip {
+        padding: 0.3rem 0.85rem; border-radius: 20px; border: 1px solid rgba(74,44,26,0.15);
+        font-size: 0.78rem; font-weight: 500; cursor: pointer; background: #fff;
+        color: #7a6a60; transition: all 0.15s; font-family: 'Outfit',sans-serif;
+      }
+      .admin-chip:hover { border-color: #8b5e2a; color: #4a2c1a; }
+      .admin-chip.active { background: #3d2518; color: #f7ede0; border-color: #3d2518; }
+
+      /* Stats mini bar */
+      .admin-stats-mini {
+        display: flex; gap: 0.75rem; margin-bottom: 1rem; flex-wrap: wrap;
+      }
+      .admin-stat-chip {
+        background: #fff; border: 1px solid rgba(74,44,26,0.1); border-radius: 8px;
+        padding: 0.5rem 1rem; font-family: 'Outfit',sans-serif;
+      }
+      .admin-stat-chip strong { font-size: 1.2rem; color: #2d1a12; display: block; line-height: 1; }
+      .admin-stat-chip span { font-size: 0.72rem; color: #9a8678; }
+
+      /* Table style user rows */
+      .admin-table-header {
+        display: grid; gap: 0; border-radius: 8px 8px 0 0;
+        background: rgba(74,44,26,0.05); border: 1px solid rgba(74,44,26,0.1);
+        border-bottom: none; padding: 0.5rem 1rem;
+        font-size: 0.7rem; font-weight: 600; color: #9a8678;
+        text-transform: uppercase; letter-spacing: 0.07em;
+      }
+      .admin-table-body { border: 1px solid rgba(74,44,26,0.1); border-radius: 0 0 8px 8px; background: #fff; overflow: hidden; }
+      .admin-table-row {
+        display: grid; padding: 0.75rem 1rem; align-items: center; gap: 1rem;
+        border-bottom: 1px solid rgba(74,44,26,0.06); transition: background 0.12s;
+      }
+      .admin-table-row:last-child { border-bottom: none; }
+      .admin-table-row:hover { background: rgba(74,44,26,0.025); }
+
+      /* Permissions grid: 2 columns to reduce height */
+      #permissions-matrix { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+      @media (max-width: 700px) { #permissions-matrix { grid-template-columns: 1fr; } }
+
+      /* Login card */
+      .admin-login-full {
+        min-height: 100vh; display: flex; align-items: center; justify-content: center;
+        background: #f7f0e8;
+      }
+      .admin-login-box {
+        background: #fff; border-radius: 16px; padding: 2.5rem;
+        border: 1px solid rgba(74,44,26,0.12); width: 100%; max-width: 380px;
+        box-shadow: 0 8px 40px rgba(74,44,26,0.08);
+      }
+    </style>
 </head>
 <body class="admin-body">
-    <main class="admin-shell">
-        <section class="admin-hero">
-            <a href="/" class="admin-brand">SoulfullBites</a>
-            <div>
-                <p class="admin-kicker">Store Console</p>
-                <h1>Orders &amp; Operations</h1>
-                <p class="admin-copy">Track incoming orders, update delivery status, and keep the storefront organized without leaving Vercel.</p>
+
+  <!-- ── LOGIN ── -->
+  <div id="admin-login-panel" class="admin-login-full">
+    <div class="admin-login-box">
+      <div style="text-align:center;margin-bottom:2rem">
+        <div style="font-family:'Cormorant Garamond',serif;font-size:1.6rem;color:#3d2518;font-weight:600">SoulfullBites</div>
+        <div style="font-size:0.8rem;color:#9a8678;margin-top:0.25rem">Store Console · Secure Access</div>
+      </div>
+      <form id="admin-login-form">
+        <label class="admin-field">
+          <span>Admin Password</span>
+          <input id="admin-password" type="password" autocomplete="current-password" placeholder="Enter admin password" required>
+        </label>
+        <button type="submit" id="admin-login-button" class="admin-primary-btn" style="width:100%;margin-top:1.25rem">Open Dashboard →</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- ── DASHBOARD ── -->
+  <div id="admin-dashboard" class="hidden">
+
+    <!-- Sticky Top Bar -->
+    <header class="admin-topbar">
+      <a href="/" class="admin-topbar-brand">
+        <img src="/assets/logo.png" alt="logo" onerror="this.style.display='none'">
+        SoulfullBites
+      </a>
+      <div class="admin-topbar-divider"></div>
+      <nav class="admin-topbar-nav">
+        <button class="admin-topbar-tab active" data-module="orders">
+          📦 Orders
+        </button>
+        <button class="admin-topbar-tab" data-module="products">
+          🍫 Products
+        </button>
+        <button class="admin-topbar-tab" data-module="content">
+          📝 Site Content
+        </button>
+        <button class="admin-topbar-tab" data-module="users">
+          👥 Users
+        </button>
+        <button class="admin-topbar-tab" data-module="permissions">
+          🔐 Roles &amp; Permissions
+        </button>
+      </nav>
+      <div class="admin-topbar-right">
+        <div id="admin-state" class="admin-state hidden" style="font-size:0.78rem"></div>
+        <button type="button" id="admin-refresh" class="admin-secondary-btn" style="padding:0.35rem 0.85rem;font-size:0.8rem">↻ Refresh</button>
+        <button type="button" id="admin-logout" class="admin-ghost-btn" style="padding:0.35rem 0.85rem;font-size:0.8rem">Logout</button>
+      </div>
+    </header>
+
+    <main class="admin-page">
+
+      <!-- ── ORDERS MODULE ── -->
+      <div id="module-orders">
+        <div class="admin-module-header">
+          <div>
+            <div class="admin-module-title">Live Orders</div>
+          </div>
+          <button type="button" id="admin-export-csv" class="admin-secondary-btn" style="font-size:0.8rem;padding:0.4rem 1rem">
+            ⬇ Export CSV
+          </button>
+        </div>
+
+        <!-- Status chips -->
+        <div class="admin-chip-row" id="admin-tabs">
+          <button class="admin-chip active" data-status="all">All Orders</button>
+          <button class="admin-chip" data-status="new">Pending</button>
+          <button class="admin-chip" data-status="paid">Paid</button>
+          <button class="admin-chip" data-status="waitlist">Waitlist</button>
+          <button class="admin-chip" data-status="delivered">Delivered</button>
+        </div>
+
+        <!-- Stats mini -->
+        <div id="admin-stats-container" class="admin-stats-mini"></div>
+
+        <!-- Filter bar -->
+        <div class="admin-filterbar">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#9a8678" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input id="admin-search" type="search" placeholder="Search customer, email, order ID…">
+          <div class="admin-filterbar-sep"></div>
+          <select id="admin-payment-filter">
+            <option value="all">All Payments</option>
+            <option value="paid">Paid</option>
+            <option value="unpaid">Unpaid</option>
+            <option value="waitlist">Waitlist</option>
+          </select>
+          <select id="admin-sort-filter">
+            <option value="created_at:desc">Newest First</option>
+            <option value="created_at:asc">Oldest First</option>
+            <option value="total_amount:desc">Highest Value</option>
+          </select>
+          <select id="admin-date-filter">
+            <option value="all">All Time</option>
+            <option value="today">Today</option>
+            <option value="week">This Week</option>
+            <option value="month">This Month</option>
+          </select>
+        </div>
+
+        <div id="admin-order-list" class="admin-orders"></div>
+      </div>
+
+      <!-- ── PRODUCTS MODULE ── -->
+      <div id="module-products" class="hidden">
+        <div class="admin-module-header">
+          <div class="admin-module-title">Product Catalog</div>
+          <button type="button" id="admin-add-product" class="admin-primary-btn" style="font-size:0.82rem;padding:0.4rem 1rem">+ Add Product</button>
+        </div>
+        <div class="admin-filterbar">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#9a8678" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input id="product-search" type="search" placeholder="Search products…">
+          <div class="admin-filterbar-sep"></div>
+          <select id="product-status-filter">
+            <option value="all">All Status</option>
+            <option value="active">Active</option>
+            <option value="draft">Draft</option>
+          </select>
+          <select id="product-sort-filter">
+            <option value="name:asc">Name A–Z</option>
+            <option value="name:desc">Name Z–A</option>
+            <option value="price:asc">Price Low–High</option>
+            <option value="price:desc">Price High–Low</option>
+          </select>
+        </div>
+        <div id="admin-product-list" class="admin-orders"></div>
+      </div>
+
+      <!-- ── SITE CONTENT MODULE ── -->
+      <div id="module-content" class="hidden">
+        <div class="admin-module-header">
+          <div>
+            <div class="admin-module-title">Site Content Manager</div>
+          </div>
+          <button type="button" id="admin-save-content" class="admin-primary-btn" style="font-size:0.82rem;padding:0.4rem 1rem">💾 Save All</button>
+        </div>
+        <div class="admin-card" style="padding:1.5rem">
+          <p class="admin-copy" style="margin-bottom:2rem;font-size:0.85rem">Update text visible throughout the site. Changes apply immediately after saving.</p>
+          <form id="admin-content-form" style="display:grid;gap:2rem"></form>
+        </div>
+      </div>
+
+      <!-- ── USERS MODULE ── -->
+      <div id="module-users" class="hidden">
+        <div class="admin-module-header">
+          <div>
+            <div class="admin-module-title">User Management
+              <span class="admin-module-sub">All registered accounts</span>
             </div>
-        </section>
+          </div>
+          <button type="button" id="admin-add-user" class="admin-primary-btn" style="font-size:0.82rem;padding:0.4rem 1rem">+ Add User</button>
+        </div>
 
-        <section id="admin-login-panel" class="admin-card admin-login-card">
-            <div>
-                <p class="admin-kicker">Secure Access</p>
-                <h2>Admin Login</h2>
-                <p class="admin-copy">Use your admin password to open the order dashboard.</p>
+        <!-- Rich filter bar -->
+        <div class="admin-filterbar">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#9a8678" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input id="users-search" type="search" placeholder="Search by name or email…">
+          <div class="admin-filterbar-sep"></div>
+          <select id="users-role-filter">
+            <option value="all">All Roles</option>
+            <option value="ashu">Ashu (Owner)</option>
+            <option value="staff">Staff</option>
+            <option value="user">User</option>
+          </select>
+          <select id="users-status-filter">
+            <option value="all">All Status</option>
+            <option value="active">Active</option>
+            <option value="inactive">Deactivated</option>
+          </select>
+          <select id="users-sort-filter">
+            <option value="created_at:desc">Newest First</option>
+            <option value="created_at:asc">Oldest First</option>
+            <option value="name:asc">Name A–Z</option>
+          </select>
+          <div class="admin-filterbar-sep"></div>
+          <select id="users-date-filter">
+            <option value="all">All Time</option>
+            <option value="today">Today</option>
+            <option value="week">This Week</option>
+            <option value="month">This Month</option>
+          </select>
+        </div>
+
+        <!-- Table header -->
+        <div class="admin-table-header" style="grid-template-columns:2fr 2fr 1fr 1fr 120px">
+          <span>User</span>
+          <span>Email</span>
+          <span>Role</span>
+          <span>Joined</span>
+          <span>Actions</span>
+        </div>
+        <div id="admin-user-list" class="admin-table-body"></div>
+
+        <!-- Add/Edit User Form (collapsible) -->
+        <div id="user-form-card" class="admin-card hidden" style="margin-top:1rem;padding:1.5rem">
+          <h3 id="user-form-title" style="margin-bottom:1.25rem;font-size:1rem">Add New User</h3>
+          <form id="user-form" style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;max-width:600px">
+            <input type="hidden" id="user-edit-id">
+            <label class="admin-field">
+              <span>Full Name</span>
+              <input id="user-form-name" type="text" placeholder="Jane Doe" required>
+            </label>
+            <label class="admin-field">
+              <span>Email</span>
+              <input id="user-form-email" type="email" placeholder="user@example.com" required>
+            </label>
+            <label class="admin-field" id="user-form-pw-field">
+              <span>Password</span>
+              <input id="user-form-password" type="password" placeholder="Min. 8 characters">
+            </label>
+            <label class="admin-field">
+              <span>Role</span>
+              <select id="user-form-role">
+                <option value="user">User</option>
+                <option value="staff">Staff</option>
+                <option value="ashu">Ashu (Owner)</option>
+              </select>
+            </label>
+            <div style="grid-column:1/-1;display:flex;gap:0.75rem">
+              <button type="submit" class="admin-primary-btn" id="user-form-submit">Save User</button>
+              <button type="button" class="admin-ghost-btn" id="user-form-cancel">Cancel</button>
             </div>
-            <form id="admin-login-form" class="admin-login-form">
-                <label class="admin-field">
-                    <span>Password</span>
-                    <input id="admin-password" type="password" autocomplete="current-password" placeholder="Enter admin password" required>
-                </label>
-                <button type="submit" id="admin-login-button" class="admin-primary-btn">Open Dashboard</button>
-            </form>
-        </section>
+          </form>
+        </div>
+      </div>
 
-        <section id="admin-dashboard" class="admin-dashboard hidden">
-            <div id="admin-state" class="admin-state hidden"></div>
-            <nav class="admin-tabs" style="margin-bottom: 2rem; border-bottom: none;">
-                <button class="admin-tab active" data-module="orders">Orders</button>
-                <button class="admin-tab" data-module="products">Products</button>
-                <button class="admin-tab" data-module="content">Site Content</button>
-            </nav>
-
-            <!-- ORDERS MODULE -->
-            <div id="module-orders">
-                <div class="admin-toolbar admin-card">
-                    <div class="admin-toolbar-row">
-                        <div>
-                            <p class="admin-kicker">Live Orders</p>
-                            <h2>Dashboard</h2>
-                        </div>
-                        <div class="admin-toolbar-actions">
-                            <button type="button" id="admin-refresh" class="admin-secondary-btn">Refresh</button>
-                            <button type="button" id="admin-logout" class="admin-ghost-btn">Logout</button>
-                        </div>
-                    </div>
-
-                    <div class="admin-tabs" id="admin-tabs" style="margin: 1.5rem 0;">
-                        <button class="admin-tab-mini active" data-status="all">All Orders</button>
-                        <button class="admin-tab-mini" data-status="new">Pending</button>
-                        <button class="admin-tab-mini" data-status="paid">Paid</button>
-                        <button class="admin-tab-mini" data-status="waitlist">Waitlist</button>
-                        <button class="admin-tab-mini" data-status="delivered">Delivered</button>
-                    </div>
-
-                    <div class="admin-filters">
-                        <div class="admin-search-wrap">
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-                            <input id="admin-search" type="search" placeholder="Search by customer, email, or order ID...">
-                        </div>
-                    </div>
-
-                    <div id="admin-stats-container" class="admin-stats" style="margin-top: 2rem;">
-                        <!-- Injected stats -->
-                    </div>
-
-                    <div class="admin-toolbar-row" style="margin-top: 1.5rem;">
-                        <div class="admin-filters-group">
-                            <label class="admin-field">
-                                <span>Payment</span>
-                                <select id="admin-payment-filter">
-                                    <option value="all">All Payments</option>
-                                    <option value="paid">Paid</option>
-                                    <option value="unpaid">Unpaid</option>
-                                    <option value="waitlist">Waitlist</option>
-                                </select>
-                            </label>
-
-                            <label class="admin-field">
-                                <span>Sort By</span>
-                                <select id="admin-sort-filter">
-                                    <option value="created_at:desc">Newest First</option>
-                                    <option value="created_at:asc">Oldest First</option>
-                                    <option value="total_amount:desc">Highest Value</option>
-                                </select>
-                            </label>
-
-                            <button type="button" id="admin-export-csv" class="admin-secondary-btn" style="height: 44px; margin-top: auto;">
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-                                Export
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <div id="admin-order-list" class="admin-orders"></div>
+      <!-- ── ROLES & PERMISSIONS MODULE ── -->
+      <div id="module-permissions" class="hidden">
+        <div class="admin-module-header">
+          <div>
+            <div class="admin-module-title">Roles &amp; Permissions
+              <span class="admin-module-sub">Customise per-user permission overrides</span>
             </div>
+          </div>
+        </div>
+        <div class="admin-filterbar" style="margin-bottom:1rem">
+          <label style="font-size:0.8rem;font-weight:500;color:#7a6a60;flex-shrink:0">Staff user:</label>
+          <select id="perm-user-select" style="flex:1;min-width:200px">
+            <option value="">— Select a staff user —</option>
+          </select>
+          <button type="button" class="admin-secondary-btn" id="perm-load-btn" style="font-size:0.82rem;padding:0.4rem 0.9rem;flex-shrink:0">Load Permissions</button>
+          <div class="admin-filterbar-sep"></div>
+          <select id="perm-category-filter">
+            <option value="all">All Categories</option>
+            <option value="orders">Orders</option>
+            <option value="products">Products</option>
+            <option value="cms">CMS</option>
+            <option value="users">Users</option>
+            <option value="media">Media</option>
+            <option value="reviews">Reviews</option>
+            <option value="profile">Profile</option>
+          </select>
+          <input type="search" id="perm-search" placeholder="Filter permissions…" style="min-width:160px">
+        </div>
+        <div id="permissions-matrix" style="margin-top:0"></div>
+        <div id="perm-save-row" class="hidden" style="margin-top:1rem">
+          <button type="button" class="admin-primary-btn" id="perm-save-btn">💾 Save Permission Overrides</button>
+        </div>
+      </div>
 
-            <!-- PRODUCTS MODULE -->
-            <div id="module-products" class="hidden">
-               <div class="admin-toolbar admin-card">
-                    <div class="admin-toolbar-row">
-                        <div>
-                            <p class="admin-kicker">Inventory Console</p>
-                            <h2>Product Catalog</h2>
-                        </div>
-                        <div class="admin-toolbar-actions">
-                            <button type="button" id="admin-add-product" class="admin-primary-btn">+ Add New Product</button>
-                        </div>
-                    </div>
-                </div>
-                <div id="admin-product-list" class="admin-orders"></div>
-            </div>
-
-            <!-- SITE CONTENT MODULE -->
-            <div id="module-content" class="hidden">
-                <div class="admin-card">
-                    <div class="admin-toolbar-row">
-                        <div>
-                            <p class="admin-kicker">CMS Console</p>
-                            <h2>Site Content Manager</h2>
-                        </div>
-                        <div class="admin-toolbar-actions">
-                            <button type="button" id="admin-save-content" class="admin-primary-btn">Save All Changes</button>
-                        </div>
-                    </div>
-                    <p class="admin-copy" style="margin-top: 1rem;">Update text available throughout the site. Changes will be visible to users immediately after saving.</p>
-
-                    <form id="admin-content-form" style="margin-top: 3rem; display: grid; gap: 2.5rem;">
-                        <!-- Injected fields -->
-                    </form>
-                </div>
-            </div>
-        </section>
     </main>
+  </div>
 
-    <script type="module" src="./admin-dashboard.js"></script>
+  <script type="module" src="./admin-dashboard.js"></script>
 </body>
 </html>

@@ -6,6 +6,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>SoulfullBites | Artisanal Chocolate</title>
     <meta name="description" content="SoulfullBites — Small-batch handmade chocolates crafted with soul and intention.">
+    <meta property="og:title" content="SoulfullBites | Artisanal Chocolate">
+    <meta property="og:description" content="Handmade small-batch chocolate bars, gifting collections, and soulful cocoa stories.">
     <meta property="og:image" content="/assets/chocolate_mountain.png">
     <link rel="icon" type="image/png" href="/assets/logo.png">
 
@@ -62,7 +64,7 @@
                 <h1 data-content-key="home_h1">Soulfull<br><em>Bites.</em></h1>
                 <p data-content-key="home_p">Artisanal, small-batch chocolates made with organic mountain botanicals. Every bite is a story told in cacao.</p>
                 <div class="hero-btns" style="margin-top: 3rem;">
-                    <a href="#sec-cta" class="btn-primary" data-content-key="home_cta">Begin the Journey</a>
+                    <a href="/shop" class="btn-primary" data-content-key="home_cta">Shop the Collection</a>
                 </div>
             </div>
         </section>
@@ -172,15 +174,15 @@
         <!-- SECTION 8: CTA -->
         <section class="scroll-section" id="sec-cta">
             <div class="label-wrap center">
-                <span class="label-tag">The Arrival</span>
-                <h2 data-content-key="home_waitlist_h">Be the first<br><em>to taste the soul.</em></h2>
-                <p data-content-key="home_waitlist_p">We're launching soon. Join the waitlist and receive a handmade welcome gift with your first order.</p>
+                <span class="label-tag">The Inner Circle</span>
+                <h2 data-content-key="home_newsletter_h">Stay close to<br><em>every new batch.</em></h2>
+                <p data-content-key="home_newsletter_p">Get first access to limited drops, gifting releases, tasting notes, and chef collaborations from our chocolate studio.</p>
                 <form id="waitlist-form">
                     <div style="display: none; visibility: hidden;"><input type="text" name="hp_field" tabindex="-1"
                             autocomplete="off"></div>
                     <input type="email" id="email-input" placeholder="Your email address" required>
-                    <div class="cf-turnstile" data-sitekey="1x00000000000000000000AA" data-theme="light"></div>
-                    <button type="submit" data-content-key="home_cta">Stay Soulful</button>
+                    <div data-turnstile-widget data-theme="light"></div>
+                    <button type="submit" data-content-key="home_newsletter_cta">Join the Insider List</button>
                 </form>
             </div>
         </section>

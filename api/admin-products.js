@@ -11,8 +11,12 @@ export default async function handler(req, res) {
   res.setHeader('Expires', '0');
 
   try {
+    const url = new URL(req.url || '/', 'http://localhost');
+
     if (req.method === 'GET') {
-      const products = await getProducts(true);
+      const status = url.searchParams.get('status') || 'all';
+      const sort = url.searchParams.get('sort') || 'name:asc';
+      const products = await getProducts({ status, sort });
       return res.status(200).json(products);
     }
 
@@ -22,7 +26,11 @@ export default async function handler(req, res) {
     }
 
     if (req.method === 'DELETE') {
-      const { id } = req.query;
+      const id = url.searchParams.get('id') || req.query?.id;
+      if (!id) {
+        return res.status(400).json({ error: 'Product id is required' });
+      }
+
       await deleteProduct(id);
       return res.status(200).json({ success: true });
     }

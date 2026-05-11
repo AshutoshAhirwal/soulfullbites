@@ -5,6 +5,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Shop | SoulfullBites</title>
+    <meta name="description" content="Shop SoulfullBites handcrafted chocolate bars, gifting-ready small-batch collections, and premium cocoa favorites.">
+    <meta property="og:title" content="Shop SoulfullBites">
+    <meta property="og:description" content="Browse our handcrafted small-batch chocolate collection with fresh dispatch and gifting-ready packaging.">
+    <meta property="og:image" content="/assets/chocolate_bar.png">
     <link rel="icon" type="image/png" href="/assets/logo.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -50,7 +54,7 @@
 
     <!-- CART DRAWER -->
     <div id="cart-drawer"
-        style="position: fixed; top: 0; right: -400px; width: 400px; height: 100vh; background: #fff; z-index: 1000; box-shadow: -10px 0 30px rgba(0,0,0,0.1); transition: right 0.4s cubic-bezier(0.16,1,0.3,1); display: flex; flex-direction: column; color: var(--text-dark);">
+        style="position: fixed; top: 0; right: -100vw; width: min(400px, 100vw); height: 100vh; background: #fff; z-index: 1000; box-shadow: -10px 0 30px rgba(0,0,0,0.1); transition: right 0.4s cubic-bezier(0.16,1,0.3,1); display: flex; flex-direction: column; color: var(--text-dark);">
         <div
             style="padding: 2.5rem; border-bottom: 1px solid var(--glass-border); display: flex; justify-content: space-between; align-items: center;">
             <h3 style="font-size: 1.8rem;" data-content-key="shop_bag_title">Your Bag</h3>
@@ -109,6 +113,27 @@
                         Delicate & Floral</p>
                 </div>
             </div>
+
+            <section class="store-assurance">
+                <div class="store-assurance-grid">
+                    <article class="assurance-card">
+                        <span class="label-tag">Fresh Dispatch</span>
+                        <h3>Made in weekly micro-batches.</h3>
+                        <p>Orders are prepared in limited runs so texture, aroma, and snap arrive at their best.</p>
+                    </article>
+                    <article class="assurance-card">
+                        <span class="label-tag">Gift Ready</span>
+                        <h3>Premium presentation built in.</h3>
+                        <p>Each order is packed to feel present-worthy for birthdays, thank-yous, and client gifting.</p>
+                    </article>
+                    <article class="assurance-card">
+                        <span class="label-tag">Store Confidence</span>
+                        <h3>Transparent ingredients and secure payments.</h3>
+                        <p>Every product shows its flavor profile and ingredients, and checkout is handled through Razorpay.</p>
+                    </article>
+                </div>
+                <p class="store-assurance-note">Need gifting inspiration or event dessert ideas? Explore <a href="/inspiration">Inspiration</a> or message us on Instagram.</p>
+            </section>
         </div>
 
         <!-- REVIEWS SECTION -->
@@ -118,8 +143,9 @@
                     <div>
                         <span class="label-tag">Testimonials</span>
                         <h2 style="font-size: 3rem; font-family: 'Cormorant Garamond', serif;">Voice of the <em>Soul.</em></h2>
+                        <p style="max-width: 420px; color: var(--text-light); margin-top: 0.8rem;">Verified buyer reviews unlock after an order is marked delivered, so this section stays trustworthy as the store grows.</p>
                     </div>
-                    <button id="open-review-form" class="btn-buy" style="background: var(--choc-dark); border: none; padding: 1rem 2rem;">Write a Review</button>
+                    <button id="open-review-form" class="btn-buy" style="background: var(--choc-dark); border: none; padding: 1rem 2rem;">Leave a Delivered-Order Review</button>
                 </div>
 
                 <div id="reviews-container" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 2.5rem;">
@@ -202,7 +228,8 @@
     <div id="review-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.4); z-index: 5000; backdrop-filter: blur(8px); align-items: center; justify-content: center;">
         <div class="admin-card" style="width: 100%; max-width: 500px; padding: 3rem; background: #fff; position: relative; border-radius: 2.5rem;">
             <button id="close-review-modal" style="position: absolute; top: 1.5rem; right: 1.5rem; background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #999;">✕</button>
-            <h3 style="font-size: 2rem; margin-bottom: 2rem; font-family: 'Cormorant Garamond', serif;">Share Your Experience</h3>
+            <h3 style="font-size: 2rem; margin-bottom: 1rem; font-family: 'Cormorant Garamond', serif;">Share Your Experience</h3>
+            <p style="font-size: 0.9rem; color: var(--text-light); margin-bottom: 1.5rem;">Use the delivered order ID from your confirmation and the same name used at checkout.</p>
             
             <form id="review-form" style="display: flex; flex-direction: column; gap: 1.2rem;">
                 <div style="display: flex; flex-direction: column; gap: 0.5rem;">
@@ -216,8 +243,8 @@
                     </div>
                 </div>
 
-                <input type="text" id="review-order-id" placeholder="Order ID (from your email)" required style="padding: 1rem; border-radius: 1rem; border: 1px solid #ddd;">
-                <input type="text" id="review-name" placeholder="Your Name" required style="padding: 1rem; border-radius: 1rem; border: 1px solid #ddd;">
+                <input type="text" id="review-order-id" placeholder="Delivered order ID" required style="padding: 1rem; border-radius: 1rem; border: 1px solid #ddd;">
+                <input type="text" id="review-name" placeholder="Name used at checkout" required style="padding: 1rem; border-radius: 1rem; border: 1px solid #ddd;">
                 <textarea id="review-comment" placeholder="Tell us about the flavor, texture, and your overall experience..." required style="padding: 1rem; border-radius: 1rem; border: 1px solid #ddd; height: 120px; resize: none;"></textarea>
                 
                 <button type="submit" class="btn-buy" style="width: 100%; padding: 1.2rem; background: var(--choc-dark); margin-top: 1rem;">Submit Verified Review</button>

@@ -1,6 +1,35 @@
 import { defineConfig, loadEnv } from 'vite';
 import { existsSync } from 'node:fs';
 import path from 'node:path';
+import dns from 'node:dns';
+import { Resolver } from 'node:dns/promises';
+
+// ── ISP DNS Fix ───────────────────────────────────────────────────────────────
+// Some Indian ISPs block/refuse to resolve AWS/Neon hostnames.
+// Override both Node dns AND undici (used by global fetch) to use Google DNS.
+dns.setDefaultResultOrder('ipv4first');
+dns.setServers(['8.8.8.8', '8.8.4.4', '1.1.1.1']);
+
+// Patch undici's global dispatcher to use Google DNS for all fetch() calls
+// (needed because @neondatabase/serverless uses the global fetch, not node:http)
+try {
+  const { setGlobalDispatcher, Agent } = await import('undici');
+  const customResolver = new Resolver();
+  customResolver.setServers(['8.8.8.8', '8.8.4.4', '1.1.1.1']);
+  setGlobalDispatcher(new Agent({
+    connect: {
+      lookup: (hostname, options, callback) => {
+        customResolver.lookup(hostname, options && options.family ? { family: options.family } : {})
+          .then(({ address, family }) => callback(null, address, family))
+          .catch((err) => callback(err));
+      },
+    },
+  }));
+  console.log('\x1b[32m[DNS Fix]\x1b[0m Using Google DNS (8.8.8.8) for all fetch requests.');
+} catch (e) {
+  console.warn('[DNS Fix] Could not patch undici:', e.message);
+}
+// ─────────────────────────────────────────────────────────────────────────────
 
 async function readJsonBody(req) {
   const chunks = [];
@@ -69,6 +98,9 @@ function localApiPlugin() {
         }
 
         try {
+          const parsedUrl = new URL(req.url || '/', 'http://localhost');
+          req.query = Object.fromEntries(parsedUrl.searchParams.entries());
+
           if (req.method && ['POST', 'PUT', 'PATCH', 'DELETE'].includes(req.method.toUpperCase())) {
             req.body = await readJsonBody(req);
           } else {
@@ -113,6 +145,8 @@ export default defineConfig(({ mode }) => {
           shop: path.resolve(process.cwd(), 'shop.html'),
           checkout: path.resolve(process.cwd(), 'checkout.html'),
           admin: path.resolve(process.cwd(), 'admin.html'),
+          login: path.resolve(process.cwd(), 'login.html'),
+          dashboard: path.resolve(process.cwd(), 'dashboard.html'),
           inspiration: path.resolve(process.cwd(), 'inspiration.html'),
         },
       },

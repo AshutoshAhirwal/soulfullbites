@@ -21,7 +21,17 @@ export default async function handler(req, res) {
       const review = await submitReview({ orderId, customerName, rating, comment });
       return res.status(201).json({ success: true, review });
     } catch (error) {
-      return res.status(error.message === 'Invalid Order ID' ? 404 : 500).json({ error: error.message });
+      const statusMap = new Map([
+        ['Invalid Order ID', 404],
+        ['Only paid orders can be reviewed', 400],
+        ['You can review your order after it is marked delivered', 400],
+        ['Reviewer name must match the order name', 400],
+        ['Please choose a valid rating', 400],
+        ['Please share a slightly longer review', 400],
+        ['A review has already been submitted for this order', 409],
+      ]);
+
+      return res.status(statusMap.get(error.message) || 500).json({ error: error.message });
     }
   }
 

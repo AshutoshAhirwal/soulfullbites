@@ -6,6 +6,8 @@ const saveContentBtn = document.getElementById('admin-save-content');
 const addProductBtn = document.getElementById('admin-add-product');
 const refreshBtn = document.getElementById('admin-refresh');
 const searchInput = document.getElementById('admin-search');
+const paymentFilterInput = document.getElementById('admin-payment-filter');
+const sortFilterInput = document.getElementById('admin-sort-filter');
 
 const loginPanel = document.getElementById('admin-login-panel');
 const dashboard = document.getElementById('admin-dashboard');
@@ -13,9 +15,33 @@ const loginForm = document.getElementById('admin-login-form');
 const passwordInput = document.getElementById('admin-password');
 const logoutBtn = document.getElementById('admin-logout');
 
+// Orders Filters
+const searchInput = document.getElementById('admin-search');
+const paymentFilterInput = document.getElementById('admin-payment-filter');
+const sortFilterInput = document.getElementById('admin-sort-filter');
+const orderDateFilterInput = document.getElementById('admin-date-filter');
+
+// Product Filters
+const productSearchInput = document.getElementById('product-search');
+const productStatusFilterInput = document.getElementById('product-status-filter');
+const productSortFilterInput = document.getElementById('product-sort-filter');
+
+// Users Filters
+const usersSearchInput = document.getElementById('users-search');
+const usersRoleFilterInput = document.getElementById('users-role-filter');
+const usersStatusFilterInput = document.getElementById('users-status-filter');
+const usersSortFilterInput = document.getElementById('users-sort-filter');
+const usersDateFilterInput = document.getElementById('users-date-filter');
+
+// Permissions Filters
+const permCategoryFilterInput = document.getElementById('perm-category-filter');
+const permSearchInput = document.getElementById('perm-search');
+
 const moduleOrders = document.getElementById('module-orders');
 const moduleProducts = document.getElementById('module-products');
 const moduleContent = document.getElementById('module-content');
+const moduleUsers = document.getElementById('module-users');
+const modulePermissions = document.getElementById('module-permissions');
 
 let currentContentSubTab = 'page-home';
 let cachedOrders = [];
@@ -111,9 +137,8 @@ refreshBtn?.addEventListener('click', () => {
 });
 
 function applyFilters() {
-  const term = (searchInput?.value || '').toLowerCase();
-
   if (!moduleOrders.classList.contains('hidden')) {
+    const term = (searchInput?.value || '').toLowerCase();
     let filtered = cachedOrders;
     if (orderFilter !== 'all') {
       if (orderFilter === 'paid') filtered = filtered.filter(o => o.paymentStatus === 'paid');
@@ -131,6 +156,7 @@ function applyFilters() {
   }
 
   if (!moduleProducts.classList.contains('hidden')) {
+    const term = (productSearchInput?.value || '').toLowerCase();
     let filtered = cachedProducts;
     if (term) {
       filtered = filtered.filter(p =>
@@ -143,10 +169,25 @@ function applyFilters() {
 }
 
 searchInput?.addEventListener('input', applyFilters);
+paymentFilterInput?.addEventListener('change', loadOrders);
+sortFilterInput?.addEventListener('change', loadOrders);
+orderDateFilterInput?.addEventListener('change', loadOrders);
 
-document.querySelectorAll('#admin-tabs button').forEach(btn => {
+// Product Filter Listeners
+productSearchInput?.addEventListener('input', applyFilters);
+productStatusFilterInput?.addEventListener('change', loadProducts);
+productSortFilterInput?.addEventListener('change', loadProducts);
+
+// User Filter Listeners
+usersSearchInput?.addEventListener('input', loadUsers);
+usersRoleFilterInput?.addEventListener('change', loadUsers);
+usersStatusFilterInput?.addEventListener('change', loadUsers);
+usersSortFilterInput?.addEventListener('change', loadUsers);
+usersDateFilterInput?.addEventListener('change', loadUsers);
+
+document.querySelectorAll('#admin-tabs .admin-chip').forEach(btn => {
   btn.addEventListener('click', () => {
-    document.querySelectorAll('#admin-tabs button').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('#admin-tabs .admin-chip').forEach(b => b.classList.remove('active'));
     btn.classList.add('active');
     orderFilter = btn.dataset.status;
     applyFilters();
@@ -170,7 +211,7 @@ document.getElementById('admin-export-csv')?.addEventListener('click', () => {
     o.totalAmount,
     o.status,
     o.paymentStatus,
-    (o.items || []).map(i => `${i.name}(${i.quantity})`).join('; ')
+    (o.items || []).map(i => `${i.name}(${i.quantity ?? i.qty ?? 0})`).join('; ')
   ]);
 
   const csvBody = [
@@ -207,14 +248,22 @@ function switchModule(moduleName) {
   moduleOrders?.classList.toggle('hidden', moduleName !== 'orders');
   moduleProducts?.classList.toggle('hidden', moduleName !== 'products');
   moduleContent?.classList.toggle('hidden', moduleName !== 'content');
+  moduleUsers?.classList.toggle('hidden', moduleName !== 'users');
+  modulePermissions?.classList.toggle('hidden', moduleName !== 'permissions');
 
   if (moduleName === 'orders') loadOrders();
   if (moduleName === 'products') loadProducts();
   if (moduleName === 'content') loadContentEditor();
+  if (moduleName === 'users') loadUsers();
+  if (moduleName === 'permissions') loadPermissionsModule();
 }
 
-document.querySelectorAll('[data-module]').forEach(btn => {
-  btn.addEventListener('click', () => switchModule(btn.dataset.module));
+document.querySelectorAll('.admin-topbar-tab[data-module]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.admin-topbar-tab').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    switchModule(btn.dataset.module);
+  });
 });
 
 // Order Logic
@@ -222,7 +271,16 @@ async function loadOrders() {
   if (!moduleOrders || moduleOrders.classList.contains('hidden')) return;
   setState('Syncing...', 'success');
   try {
-    const data = await apiRequest('/api/admin-orders');
+    const params = new URLSearchParams();
+    const paymentStatus = paymentFilterInput?.value || 'all';
+    const sort = sortFilterInput?.value || 'created_at:desc';
+    const dateFilter = orderDateFilterInput?.value || 'all';
+
+    if (paymentStatus !== 'all') params.set('paymentStatus', paymentStatus);
+    if (sort) params.set('sort', sort);
+    if (dateFilter !== 'all') params.set('dateFilter', dateFilter);
+
+    const data = await apiRequest(`/api/admin-orders${params.toString() ? `?${params.toString()}` : ''}`);
     showDashboard();
     cachedOrders = data.orders || [];
     renderStats(cachedOrders);
@@ -237,36 +295,20 @@ function renderStats(orders) {
   const statsContainer = document.getElementById('admin-stats-container');
   if (!statsContainer) return;
 
-  const stats = {
-    total: orders.length,
-    new: orders.filter(o => o.status === 'new').length,
-    waitlist: orders.filter(o => o.paymentStatus === 'waitlist').length,
-    paid: orders.filter(o => o.paymentStatus === 'paid').length,
-    delivered: orders.filter(o => o.status === 'delivered').length
-  };
+  const stats = [
+    { label: 'Active/New', val: orders.filter(o => o.status === 'new').length },
+    { label: 'Paid Cases', val: orders.filter(o => o.paymentStatus === 'paid').length },
+    { label: 'Waitlist', val: orders.filter(o => o.paymentStatus === 'waitlist').length },
+    { label: 'Delivered', val: orders.filter(o => o.status === 'delivered').length },
+    { label: 'Total Log', val: orders.length }
+  ];
 
-  statsContainer.innerHTML = `
-        <div class="admin-stat">
-            <strong>${stats.new}</strong>
-            <span>Active/New</span>
-        </div>
-        <div class="admin-stat">
-            <strong>${stats.paid}</strong>
-            <span>Paid Cases</span>
-        </div>
-        <div class="admin-stat">
-            <strong>${stats.waitlist}</strong>
-            <span>Waitlist</span>
-        </div>
-        <div class="admin-stat">
-            <strong>${stats.delivered}</strong>
-            <span>Delivered</span>
-        </div>
-        <div class="admin-stat">
-            <strong>${stats.total}</strong>
-            <span>Total Log</span>
-        </div>
-    `;
+  statsContainer.innerHTML = stats.map(s => `
+    <div class="admin-stat-chip">
+      <strong>${s.val}</strong>
+      <span>${s.label}</span>
+    </div>
+  `).join('');
 }
 
 function renderOrders(orders) {
@@ -293,7 +335,7 @@ function renderOrders(orders) {
                     <p class="admin-kicker" style="font-size: 0.65rem; margin-bottom: 1rem;">Customer Profile</p>
                     <div class="admin-order-meta">
                         <p style="font-size: 1.05rem;"><strong style="color: var(--gold); font-weight: 600;">Email:</strong> ${escapeHtml(ord.customerEmail)}</p>
-                        <p style="font-size: 1.05rem;"><strong style="color: var(--gold); font-weight: 600;">Contact:</strong> ${ord.customerPhone}</p>
+                        <p style="font-size: 1.05rem;"><strong style="color: var(--gold); font-weight: 600;">Contact:</strong> ${escapeHtml(ord.customerPhone)}</p>
                         <p style="font-size: 1.05rem;"><strong style="color: var(--gold); font-weight: 600;">Location:</strong> ${escapeHtml(ord.customerAddress)}</p>
                     </div>
                     
@@ -306,15 +348,18 @@ function renderOrders(orders) {
                 <div class="admin-order-content-inner">
                     <p class="admin-kicker" style="font-size: 0.65rem; opacity: 0.6; margin-bottom: 1rem;">Order Selection</p>
                     <div class="admin-order-lines">
-                        ${(ord.items || []).map(it => `
+                        ${(ord.items || []).map(it => {
+                            const quantity = Number(it.quantity ?? it.qty ?? 0);
+                            return `
                             <div class="admin-order-line">
                                 <div>
-                                    <strong style="color: var(--choc-dark); font-weight: 600;">${it.name}</strong>
-                                    <small style="display: block; font-size: 0.75rem; opacity: 0.5;">${it.quantity} Unit${it.quantity > 1 ? 's' : ''}</small>
+                                    <strong style="color: var(--choc-dark); font-weight: 600;">${escapeHtml(it.name)}</strong>
+                                    <small style="display: block; font-size: 0.75rem; opacity: 0.5;">${quantity} Unit${quantity > 1 ? 's' : ''}</small>
                                 </div>
-                                <span style="font-weight: 600; color: var(--gold);">₹${it.price * it.quantity}</span>
+                                <span style="font-weight: 600; color: var(--gold);">₹${Number(it.price || 0) * quantity}</span>
                             </div>
-                        `).join('') || '<p style="opacity: 0.3; font-style: italic; padding: 2rem; text-align: center;">No catalog items found</p>'}
+                        `;
+                        }).join('') || '<p style="opacity: 0.3; font-style: italic; padding: 2rem; text-align: center;">No catalog items found</p>'}
                     </div>
                 </div>
             </div>
@@ -328,10 +373,7 @@ function renderOrders(orders) {
                         <option value="delivered" ${ord.status === 'delivered' ? 'selected' : ''}>Delivered</option>
                         <option value="cancelled" ${ord.status === 'cancelled' ? 'selected' : ''}>Cancelled</option>
                     </select>
-                    <p style="font-size: 0.75rem; color: var(--text-light); opacity: 0.6;">State change triggers automated logistics notifications</p>
-                </div>
-                <div>
-                     ${ord.paymentStatus === 'waitlist' ? `<button class="admin-primary-btn" onclick="copyPaymentLink('${ord.id}')">Payment Link</button>` : ''}
+                    <p style="font-size: 0.75rem; color: var(--text-light); opacity: 0.6;">Update order state here as the kitchen and delivery flow progresses.</p>
                 </div>
             </div>
         </article>
@@ -435,7 +477,13 @@ async function loadProducts() {
   if (!moduleProducts || moduleProducts.classList.contains('hidden')) return;
   setState('Catalog loading...', 'success');
   try {
-    const products = await apiRequest('/api/admin-products');
+    const status = productStatusFilterInput?.value || 'all';
+    const sort = productSortFilterInput?.value || 'name:asc';
+    const params = new URLSearchParams();
+    if (status !== 'all') params.set('status', status);
+    if (sort) params.set('sort', sort);
+
+    const products = await apiRequest(`/api/admin-products?${params.toString()}`);
     cachedProducts = products || [];
     applyFilters();
     setState('');
@@ -675,9 +723,10 @@ const CONTENT_DEFINITION = [
         ]
       },
       {
-        label: 'Waitlist', fields: [
-          { key: 'home_waitlist_h', label: 'Waitlist Title', type: 'text' },
-          { key: 'home_waitlist_p', label: 'Instruction Text', type: 'textarea' },
+        label: 'Insider Signup', fields: [
+          { key: 'home_newsletter_h', label: 'Signup Title', type: 'text' },
+          { key: 'home_newsletter_p', label: 'Signup Copy', type: 'textarea' },
+          { key: 'home_newsletter_cta', label: 'Signup Button', type: 'text' },
         ]
       },
       {
@@ -847,3 +896,269 @@ saveContentBtn?.addEventListener('click', async () => {
 
 // Init
 loadOrders();
+
+// ═══════════════════════════════════════════════════════════════════════════
+// USERS MODULE
+// ═══════════════════════════════════════════════════════════════════════════
+
+let cachedUsers = [];
+
+async function loadUsers() {
+  if (!moduleUsers || moduleUsers.classList.contains('hidden')) return;
+  try {
+    const params = new URLSearchParams();
+    const search = usersSearchInput?.value || '';
+    const role = usersRoleFilterInput?.value || 'all';
+    const status = usersStatusFilterInput?.value || 'all';
+    const sort = usersSortFilterInput?.value || 'created_at:desc';
+    const date = usersDateFilterInput?.value || 'all';
+
+    if (search) params.set('search', search);
+    if (role !== 'all') params.set('role', role);
+    if (status !== 'all') params.set('status', status);
+    if (sort) params.set('sort', sort);
+    if (date !== 'all') params.set('dateFilter', date);
+
+    const data = await apiRequest(`/api/admin-users?${params.toString()}`);
+    cachedUsers = data.users || [];
+    renderUsers(cachedUsers);
+  } catch (err) { setState(err.message || 'Failed to load users'); }
+}
+
+function renderUsers(users) {
+  const userList = document.getElementById('admin-user-list');
+  if (!userList) return;
+  if (!users.length) {
+    userList.innerHTML = '<div class="admin-card" style="text-align:center;padding:3rem;opacity:0.5">No users found.</div>';
+    return;
+  }
+  const roleColors = {
+    ashu:  { bg: 'rgba(139,94,42,0.1)',  text: '#7a4f1a', label: 'Ashu' },
+    staff: { bg: 'rgba(52,100,180,0.08)', text: '#2d5fa0', label: 'Staff' },
+    user:  { bg: 'rgba(0,0,0,0.04)',      text: '#6b5a50', label: 'User' },
+  };
+  
+  userList.innerHTML = users.map(u => {
+    const rc = roleColors[u.role] || roleColors.user;
+    return `
+    <div class="admin-table-row" style="grid-template-columns:2fr 2fr 1fr 1fr 120px" data-user-id="${escapeHtml(u.id)}">
+      <div style="display:flex;align-items:center;gap:0.5rem">
+        <div style="width:28px;height:28px;border-radius:50%;background:#3d2518;color:#fff;display:flex;align-items:center;justify-content:center;font-size:0.75rem;font-weight:600">
+          ${escapeHtml((u.name||'?')[0]).toUpperCase()}
+        </div>
+        <div style="font-weight:500;color:#2d1a12">${escapeHtml(u.name)}</div>
+      </div>
+      <div style="color:#7a6a60;font-size:0.82rem">${escapeHtml(u.email)}</div>
+      <div>
+        <span style="font-size:0.65rem;font-weight:700;text-transform:uppercase;padding:2px 8px;border-radius:4px;background:${rc.bg};color:${rc.text}">${rc.label}</span>
+      </div>
+      <div style="color:#9a8678;font-size:0.8rem">${new Date(u.created_at).toLocaleDateString('en-IN', { day:'numeric', month:'short' })}</div>
+      <div style="display:flex;gap:0.4rem">
+        <button class="user-edit-btn" data-id="${escapeHtml(u.id)}" title="Edit" style="border:none;background:none;padding:2px;cursor:pointer">✏️</button>
+        <button class="user-toggle-btn" data-id="${escapeHtml(u.id)}" data-active="${u.is_active}" title="${u.is_active ? 'Deactivate' : 'Activate'}" style="border:none;background:none;padding:2px;cursor:pointer">${u.is_active ? '🔓' : '🔒'}</button>
+        <button class="user-delete-btn" data-id="${escapeHtml(u.id)}" title="Delete" style="border:none;background:none;padding:2px;cursor:pointer">🗑️</button>
+      </div>
+    </div>
+  `}).join('');
+
+  userList.querySelectorAll('.user-edit-btn').forEach(btn => btn.addEventListener('click', () => openUserForm(btn.dataset.id)));
+  userList.querySelectorAll('.user-toggle-btn').forEach(btn => btn.addEventListener('click', async () => {
+    const active = btn.dataset.active === 'true';
+    await apiRequest(`/api/admin-users?id=${btn.dataset.id}`, { method: 'PATCH', body: JSON.stringify({ isActive: !active }) });
+    loadUsers();
+    setState(!active ? 'User activated' : 'User deactivated', 'success');
+  }));
+  userList.querySelectorAll('.user-delete-btn').forEach(btn => btn.addEventListener('click', async () => {
+    if (!confirm('Delete this user? This cannot be undone.')) return;
+    await apiRequest(`/api/admin-users?id=${btn.dataset.id}`, { method: 'DELETE' });
+    loadUsers();
+    setState('User deleted');
+  }));
+}
+
+function openUserForm(editId = null) {
+  const card = document.getElementById('user-form-card');
+  const title = document.getElementById('user-form-title');
+  const pwField = document.getElementById('user-form-pw-field');
+  card.classList.remove('hidden');
+  card.scrollIntoView({ behavior: 'smooth' });
+
+  if (editId) {
+    const u = cachedUsers.find(u => u.id === editId);
+    title.textContent = 'Edit User';
+    document.getElementById('user-edit-id').value = editId;
+    document.getElementById('user-form-name').value = u?.name || '';
+    document.getElementById('user-form-email').value = u?.email || '';
+    document.getElementById('user-form-email').disabled = true;
+    document.getElementById('user-form-role').value = u?.role || 'user';
+    document.getElementById('user-form-password').value = '';
+    if (pwField) pwField.querySelector('span').textContent = 'New Password (leave blank to keep)';
+  } else {
+    title.textContent = 'Add New User';
+    document.getElementById('user-edit-id').value = '';
+    document.getElementById('user-form-name').value = '';
+    document.getElementById('user-form-email').value = '';
+    document.getElementById('user-form-email').disabled = false;
+    document.getElementById('user-form-role').value = 'user';
+    document.getElementById('user-form-password').value = '';
+    if (pwField) pwField.querySelector('span').textContent = 'Password';
+  }
+}
+
+document.getElementById('admin-add-user')?.addEventListener('click', () => openUserForm());
+document.getElementById('user-form-cancel')?.addEventListener('click', () => {
+  document.getElementById('user-form-card')?.classList.add('hidden');
+  document.getElementById('user-form')?.reset();
+});
+
+document.getElementById('user-form')?.addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const editId = document.getElementById('user-edit-id').value;
+  const name = document.getElementById('user-form-name').value.trim();
+  const email = document.getElementById('user-form-email').value.trim();
+  const password = document.getElementById('user-form-password').value;
+  const role = document.getElementById('user-form-role').value;
+  const btn = document.getElementById('user-form-submit');
+
+  btn.disabled = true; btn.textContent = 'Saving...';
+
+  try {
+    if (editId) {
+      const body = { role };
+      if (password) body.password = password;
+      await apiRequest(`/api/admin-users?id=${editId}`, { method: 'PATCH', body: JSON.stringify(body) });
+      setState('User updated', 'success');
+    } else {
+      if (!password) { setState('Password is required for new users'); btn.disabled = false; btn.textContent = 'Save User'; return; }
+      await apiRequest('/api/admin-users', { method: 'POST', body: JSON.stringify({ name, email, password, role }) });
+      setState('User created', 'success');
+    }
+    document.getElementById('user-form-card').classList.add('hidden');
+    loadUsers();
+  } catch (err) {
+    setState(err.message || 'Save failed');
+  } finally { btn.disabled = false; btn.textContent = 'Save User'; }
+});
+
+// (Listeners moved to top)
+
+// ═══════════════════════════════════════════════════════════════════════════
+// PERMISSIONS MODULE
+// ═══════════════════════════════════════════════════════════════════════════
+
+let permSchema = null;
+let selectedPermUserId = null;
+let selectedPermUserOverrides = {};
+
+async function loadPermissionsModule() {
+  try {
+    // Load schema
+    const data = await apiRequest('/api/admin-permissions');
+    permSchema = data;
+
+    // Load staff users for the select dropdown
+    const staffData = await apiRequest('/api/admin-users?role=staff');
+    const staffUsers = (staffData.users || []).filter(u => u.role === 'staff');
+
+    const select = document.getElementById('perm-user-select');
+    if (select) {
+      select.innerHTML = '<option value="">— choose a staff user —</option>' +
+        staffUsers.map(u => `<option value="${escapeHtml(u.id)}">${escapeHtml(u.name)} (${escapeHtml(u.email)})</option>`).join('');
+    }
+  } catch (err) { setState(err.message || 'Failed to load permissions'); }
+}
+
+document.getElementById('perm-load-btn')?.addEventListener('click', async () => {
+  const userId = document.getElementById('perm-user-select')?.value;
+  if (!userId) { setState('Please select a staff user first'); return; }
+
+  selectedPermUserId = userId;
+  const userData = await apiRequest(`/api/admin-users?search=${userId}`);
+  const user = (userData.users || []).find(u => u.id === userId);
+  selectedPermUserOverrides = {};
+  try { selectedPermUserOverrides = JSON.parse(user?.permission_overrides || '{}'); } catch {}
+
+  renderPermissionsMatrix();
+});
+
+function renderPermissionsMatrix() {
+  if (!permSchema) return;
+  const { permissions, roleDefaults } = permSchema;
+  const staffDefaults = new Set(roleDefaults.staff || []);
+  const matrix = document.getElementById('permissions-matrix');
+  if (!matrix) return;
+
+  const categoryFilter = permCategoryFilterInput?.value || 'all';
+  const searchTerm = (permSearchInput?.value || '').toLowerCase();
+
+  // Group by category with filtering
+  const byCategory = {};
+  permissions.forEach(p => {
+    if (categoryFilter !== 'all' && p.category !== categoryFilter) return;
+    if (searchTerm && !p.label.toLowerCase().includes(searchTerm) && !p.key.toLowerCase().includes(searchTerm)) return;
+
+    if (!byCategory[p.category]) byCategory[p.category] = [];
+    byCategory[p.category].push(p);
+  });
+
+  matrix.innerHTML = Object.entries(byCategory).map(([cat, perms]) => `
+    <div style="margin-bottom:2rem">
+      <p class="admin-kicker" style="margin-bottom:0.75rem;font-size:0.65rem;letter-spacing:0.1em;color:#9a8678">${escapeHtml(cat)}</p>
+      <div style="display:grid;gap:0.4rem">
+        ${perms.map(p => {
+          const defaultGranted = staffDefaults.has(p.key);
+          const override = selectedPermUserOverrides[p.key];
+          const effective = override !== undefined ? override : defaultGranted;
+          return `
+            <label style="display:flex;align-items:center;gap:0.85rem;padding:0.7rem 1rem;background:${effective ? 'rgba(74,44,26,0.05)' : '#fff'};border:1px solid rgba(74,44,26,0.1);border-radius:8px;cursor:pointer;font-size:0.85rem;color:#3d2518;transition:all 0.15s">
+              <input type="checkbox" class="perm-checkbox" data-key="${p.key}" ${effective ? 'checked' : ''} style="accent-color:#3d2518;width:16px;height:16px;flex-shrink:0">
+              <span style="flex:1;color:#2d1a12;font-weight:${effective ? '600' : '400'}">${escapeHtml(p.label)}</span>
+              ${override !== undefined
+                ? `<span style="font-size:0.65rem;font-weight:600;padding:2px 9px;border-radius:10px;background:rgba(139,94,42,0.12);color:#8b5e2a;border:1px solid rgba(139,94,42,0.2);letter-spacing:0.04em">OVERRIDDEN</span>`
+                : defaultGranted
+                  ? `<span style="font-size:0.65rem;font-weight:600;padding:2px 9px;border-radius:10px;background:rgba(44,120,74,0.1);color:#2c784a;border:1px solid rgba(44,120,74,0.2);letter-spacing:0.04em">DEFAULT</span>`
+                  : `<span style="font-size:0.65rem;font-weight:600;padding:2px 9px;border-radius:10px;background:rgba(0,0,0,0.05);color:#9a8678;border:1px solid rgba(0,0,0,0.08);letter-spacing:0.04em">DENIED</span>`
+              }
+            </label>
+          `;
+        }).join('')}
+      </div>
+    </div>
+  `).join('');
+
+  if (Object.keys(byCategory).length === 0) {
+    matrix.innerHTML = '<div style="text-align:center;padding:3rem;color:#9a8678;font-size:0.85rem">No permissions found matching filters.</div>';
+  }
+
+  matrix.querySelectorAll('.perm-checkbox').forEach(cb => cb.addEventListener('change', () => {
+    document.getElementById('perm-save-row')?.classList.remove('hidden');
+  }));
+}
+
+permCategoryFilterInput?.addEventListener('change', renderPermissionsMatrix);
+permSearchInput?.addEventListener('input', renderPermissionsMatrix);
+
+document.getElementById('perm-save-btn')?.addEventListener('click', async () => {
+  if (!selectedPermUserId || !permSchema) return;
+  const { permissions, roleDefaults } = permSchema;
+  const staffDefaults = new Set(roleDefaults.staff || []);
+  const overrides = {};
+
+  document.querySelectorAll('.perm-checkbox').forEach(cb => {
+    const key = cb.dataset.key;
+    const checked = cb.checked;
+    const defaultVal = staffDefaults.has(key);
+    // Only store overrides that differ from the role default
+    if (checked !== defaultVal) overrides[key] = checked;
+  });
+
+  try {
+    await apiRequest('/api/admin-permissions', {
+      method: 'PATCH',
+      body: JSON.stringify({ userId: selectedPermUserId, permissionOverrides: overrides })
+    });
+    setState('Permissions saved successfully', 'success');
+    selectedPermUserOverrides = overrides;
+    renderPermissionsMatrix();
+  } catch (err) { setState(err.message || 'Save failed'); }
+});

@@ -24,6 +24,11 @@ Security for your internal operations console.
 - **`ADMIN_PASSWORD`**: The password you type to log in to `/admin.html`.
 - **`ADMIN_SESSION_SECRET`**: A random long string used to sign secure cookies.
 
+### 5. Cloudflare Turnstile
+Protects waitlist and checkout submissions from automated abuse.
+- **`TURNSTILE_SECRET_KEY`**: Your server-side secret from Cloudflare Turnstile.
+- **`VITE_TURNSTILE_SITE_KEY`**: The public site key exposed to the storefront.
+
 ---
 
 ## How to Update

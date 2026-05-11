@@ -1,6 +1,17 @@
 import crypto from 'node:crypto';
-import { updatePaymentStatus } from './_lib/orders.js';
+import { getOrderById, updatePaymentStatus } from './_lib/orders.js';
 import { sendOrderEmails } from './_lib/emails.js';
+
+const safeEqual = (left, right) => {
+  const leftBuffer = Buffer.from(left || '', 'utf8');
+  const rightBuffer = Buffer.from(right || '', 'utf8');
+
+  if (leftBuffer.length !== rightBuffer.length) {
+    return false;
+  }
+
+  return crypto.timingSafeEqual(leftBuffer, rightBuffer);
+};
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -25,20 +36,40 @@ export default async function handler(req, res) {
     .update(body.toString())
     .digest("hex");
 
-  if (expectedSignature !== razorpay_signature) {
+  if (!safeEqual(expectedSignature, razorpay_signature)) {
     return res.status(400).json({ error: 'Invalid payment signature' });
   }
 
   try {
+    const storedOrder = await getOrderById(order_id);
+    if (!storedOrder) {
+      return res.status(404).json({ error: 'Order not found' });
+    }
+
+    if (storedOrder.razorpayOrderId !== razorpay_order_id) {
+      return res.status(400).json({ error: 'Payment order mismatch' });
+    }
+
+    if (storedOrder.paymentStatus === 'paid') {
+      const samePayment = storedOrder.razorpayPaymentId === razorpay_payment_id;
+
+      return res.status(samePayment ? 200 : 409).json({
+        success: samePayment,
+        message: samePayment ? 'Payment already verified' : 'Order already has a different payment recorded',
+        order: storedOrder,
+      });
+    }
+
     // 2. Update status in DB
     const updatedOrder = await updatePaymentStatus(order_id, {
+      expectedRazorpayOrderId: razorpay_order_id,
       razorpayPaymentId: razorpay_payment_id,
       razorpaySignature: razorpay_signature,
-      status: 'paid'
+      status: 'paid',
     });
 
     if (!updatedOrder) {
-      return res.status(404).json({ error: 'Order not found' });
+      return res.status(404).json({ error: 'Order not found for this payment order' });
     }
 
     // 3. Send confirmation emails

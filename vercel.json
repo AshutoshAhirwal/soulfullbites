@@ -5,6 +5,14 @@
     {
       "source": "/api/media/:id",
       "destination": "/api/media?id=:id"
+    },
+    {
+      "source": "/login",
+      "destination": "/login.html"
+    },
+    {
+      "source": "/dashboard",
+      "destination": "/dashboard.html"
     }
   ]
 }
