@@ -1,4 +1,4 @@
-const API_URL = '/api/send-order';
+const API_URL = '/api/checkout/waitlist';
 const BAG_STORAGE_KEY = 'choc_bag';
 const HISTORY_STORAGE_KEY = 'choc_history';
 const TURNSTILE_SITE_KEY = import.meta.env.VITE_TURNSTILE_SITE_KEY || '0x4AAAAAAC-oYQnEiMEhkCQO';
@@ -792,7 +792,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const formData = new FormData(orderForm);
       
       // 1. Create Razorpay Order
-      const resData = await requestJson('/api/create-razorpay-order', {
+      const resData = await requestJson('/api/checkout/create-order', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -831,7 +831,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
           try {
             // 3. Verify Payment
-            const verifyRes = await requestJson('/api/verify-payment', {
+            const verifyRes = await requestJson('/api/checkout/verify-payment', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({

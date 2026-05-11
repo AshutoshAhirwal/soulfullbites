@@ -40,7 +40,7 @@ export default function HomePage() {
         if (btn) { btn.textContent = 'Joining...'; btn.disabled = true; }
         
         try {
-          await fetch('/api/send-order', {
+          await fetch('/api/checkout/waitlist', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ user_email: email, source: 'Home Waitlist' })
