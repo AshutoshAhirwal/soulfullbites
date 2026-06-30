@@ -353,26 +353,48 @@ function ProductsModule({ setState }) {
 
   useEffect(() => { fetchProducts(); }, []);
 
+
   const handleUpload = async (product, file) => {
     if (!file) return;
-    setState('Optimizing...', 'success');
+    setState('Uploading image...', 'success');
     try {
       const reader = new FileReader();
       reader.onload = async (e) => {
-        const optimized = await compressImage(e.target.result);
-        const res = await fetch('/api/admin/upload', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ base64: optimized, name: file.name })
-        });
-        const data = await res.json();
-        // Update local state for immediate preview
-        setProducts(prev => prev.map(p => p.id === product.id ? { ...p, image_slug: data.path } : p));
-        setState('Uploaded ✓', 'success');
+        try {
+          const optimized = await compressImage(e.target.result);
+
+          // Step 1: Store image in media table
+          const uploadRes = await fetch('/api/admin/upload', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ base64: optimized, name: file.name })
+          });
+          const uploadData = await uploadRes.json();
+          if (!uploadRes.ok) { setState('Upload failed: ' + (uploadData.error || 'unknown')); return; }
+
+          const newImageSlug = uploadData.path;
+
+          // Step 2: Update local state for instant preview
+          setProducts(prev => prev.map(p => p.id === product.id ? { ...p, image_slug: newImageSlug } : p));
+
+          // Step 3: Auto-save the product with the new image_slug to DB
+          // so it persists on page refresh (without needing to click Save Changes)
+          const saveRes = await fetch('/api/admin/products', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ...product, image_slug: newImageSlug })
+          });
+          if (saveRes.ok) {
+            setState('Image uploaded & saved ✓', 'success');
+          } else {
+            setState('Uploaded but not saved — click Save Changes');
+          }
+        } catch (innerErr) { setState('Upload error: ' + innerErr.message); }
       };
       reader.readAsDataURL(file);
-    } catch (err) { setState('Upload failed'); }
+    } catch (err) { setState('Upload failed: ' + err.message); }
   };
+
 
   const handleSave = async (p) => {
     try {
