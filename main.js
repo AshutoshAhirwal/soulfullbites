@@ -434,7 +434,12 @@ async function loadShopProducts() {
         <article class="product-card" data-id="${escapeHtml(product.id)}" data-name="${safeName}" data-price="${price}">
           ${imageHtml}
           <h3>${safeName}</h3>
-          <span class="price">₹${price.toFixed(2)}</span>
+          <span class="price">
+            ₹${price.toFixed(2)}
+            <span style="font-size: 0.8rem; font-weight: normal; opacity: 0.75; margin-left: 0.3rem;">
+              /kg + shipping charges.
+            </span>
+          </span>
           <button class="btn-buy">Add to Bag</button>
           <p class="flavor-desc" style="font-size: 0.8rem; margin-top: 1rem; color: var(--text-light);">${flavorNote}</p>
           <ul class="product-meta">

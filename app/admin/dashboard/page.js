@@ -337,6 +337,9 @@ function ProductsModule({ setState }) {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [newProductName, setNewProductName] = useState('');
+  const [adding, setAdding] = useState(false);
 
   const fetchProducts = async () => {
     setLoading(true);
@@ -373,13 +376,41 @@ function ProductsModule({ setState }) {
 
   const handleSave = async (p) => {
     try {
-      await fetch('/api/admin/products', {
+      const res = await fetch('/api/admin/products', {
         method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(p)
       });
-      setState('Synced ✓', 'success');
-      fetchProducts();
-    } catch (err) { setState('Save failed'); }
+      const data = await res.json();
+      if (!res.ok) {
+        setState(data.error || 'Save failed');
+      } else {
+        setState('Synced ✓', 'success');
+        fetchProducts();
+      }
+    } catch (err) { setState('Save failed: ' + err.message); }
+  };
+
+  const handleAddProduct = async () => {
+    const name = newProductName.trim();
+    if (!name) return;
+    setAdding(true);
+    try {
+      const res = await fetch('/api/admin/products', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: 'p' + Date.now(), name, price: 450, is_active: true, description: 'Enter description...', image_slug: 'chocolate_bar.png' })
+      });
+      const data = await res.json();
+      if (!res.ok) { setState(data.error || 'Could not add product'); }
+      else {
+        setState('Product added ✓', 'success');
+        setShowAddForm(false);
+        setNewProductName('');
+        fetchProducts();
+      }
+    } catch (err) { setState('Network error: ' + err.message); }
+    finally { setAdding(false); }
   };
 
   const filtered = products.filter(p => !search || p.name.toLowerCase().includes(search.toLowerCase()));
@@ -388,12 +419,57 @@ function ProductsModule({ setState }) {
     <div id="module-products">
       <div className="admin-module-header">
         <div className="admin-module-title">Product Catalog</div>
-        <button onClick={async () => {
-          const name = prompt('Name?');
-          if (name) await fetch('/api/admin/products', { method: 'POST', body: JSON.stringify({ id: 'p' + Date.now(), name, price: 450, is_active: true, description: '...', image_slug: 'chocolate_bar.png' }) });
-          fetchProducts();
-        }} className="admin-primary-btn">+ Add Product</button>
+        <button onClick={() => { setShowAddForm(true); setNewProductName(''); }} className="admin-primary-btn">+ Add Product</button>
       </div>
+
+      {/* Inline Add Product Form */}
+      {showAddForm && (
+        <div style={{
+          background: 'linear-gradient(135deg, #fffcf7, #fff9f0)',
+          border: '1.5px solid rgba(201,153,58,0.4)',
+          borderRadius: '1.5rem',
+          padding: '2rem',
+          marginBottom: '2rem',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '1rem',
+          boxShadow: '0 8px 30px rgba(201,153,58,0.12)'
+        }}>
+          <div style={{ flex: 1 }}>
+            <p style={{ fontSize: '0.65rem', letterSpacing: '0.15rem', textTransform: 'uppercase', color: '#c9993a', fontWeight: 700, marginBottom: '0.5rem' }}>New Product Name</p>
+            <input
+              autoFocus
+              type="text"
+              value={newProductName}
+              onChange={e => setNewProductName(e.target.value)}
+              onKeyDown={e => { if (e.key === 'Enter') handleAddProduct(); if (e.key === 'Escape') setShowAddForm(false); }}
+              placeholder="e.g. Saffron Truffle Box"
+              style={{
+                width: '100%', padding: '0.8rem 1.2rem',
+                border: '1.5px solid rgba(201,153,58,0.3)',
+                borderRadius: '0.8rem', fontSize: '1rem',
+                fontFamily: "'Outfit', sans-serif",
+                outline: 'none', background: '#fff'
+              }}
+            />
+          </div>
+          <button
+            onClick={handleAddProduct}
+            disabled={adding || !newProductName.trim()}
+            className="admin-primary-btn"
+            style={{ whiteSpace: 'nowrap', opacity: adding || !newProductName.trim() ? 0.5 : 1 }}
+          >
+            {adding ? 'Adding...' : '✓ Add'}
+          </button>
+          <button
+            onClick={() => setShowAddForm(false)}
+            className="admin-ghost-btn"
+            style={{ whiteSpace: 'nowrap' }}
+          >
+            Cancel
+          </button>
+        </div>
+      )}
 
       <div className="admin-filterbar">
         <input type="search" placeholder="Search products…" value={search} onChange={e => setSearch(e.target.value)} />
@@ -404,17 +480,34 @@ function ProductsModule({ setState }) {
           <article key={p.id} className="admin-card" style={{ marginBottom: '2rem' }}>
             <div style={{ display: 'grid', gridTemplateColumns: '240px 1fr 1fr', gap: '2.5rem' }}>
               <div className="admin-prod-sidebar" style={{ background: 'rgba(74, 44, 26, 0.02)', padding: '1.5rem', borderRadius: '2rem' }}>
-                <div className="admin-prod-preview" style={{ width: '100%', aspectRatio: '1', background: '#fff', borderRadius: '1.5rem', overflow: 'hidden', position: 'relative' }}>
-                  <img src={p.image_slug?.startsWith('/') ? p.image_slug : `/assets/${p.image_slug}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                  <label style={{ position: 'absolute', bottom: 0, width: '100%', padding: '0.8rem', background: 'rgba(255,255,255,0.9)', textAlign: 'center', cursor: 'pointer' }}>
-                    <span style={{ fontSize: '0.65rem', fontWeight: 700 }}>📷 Change Image</span>
-                    <input type="file" style={{ display: 'none' }} onChange={e => handleUpload(p, e.target.files[0])} />
-                  </label>
+                {/* Image Preview */}
+                <div style={{ width: '100%', aspectRatio: '1', background: '#fff', borderRadius: '1.5rem', overflow: 'hidden', marginBottom: '1rem', border: '2px solid rgba(201,153,58,0.2)' }}>
+                  <img
+                    src={p.image_slug ? (p.image_slug.startsWith('/') || p.image_slug.startsWith('http') ? p.image_slug : `/assets/${p.image_slug}`) : '/assets/chocolate_bar.png'}
+                    style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                    onError={(e) => { e.target.src = '/assets/chocolate_bar.png'; }}
+                    alt={p.name}
+                  />
                 </div>
-                <label className="admin-field" style={{ marginTop: '1.5rem' }}>
-                  <span>Asset Path</span>
-                  <input value={p.image_slug} onChange={e => setProducts(prev => prev.map(item => item.id === p.id ? { ...item, image_slug: e.target.value } : item))} />
+                {/* Upload Button */}
+                <label style={{
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem',
+                  width: '100%', padding: '0.85rem 1rem',
+                  background: 'linear-gradient(135deg, #c9993a, #a07828)',
+                  color: '#fff', borderRadius: '2rem', cursor: 'pointer',
+                  fontSize: '0.8rem', fontWeight: 700, letterSpacing: '0.05rem',
+                  boxShadow: '0 4px 12px rgba(201,153,58,0.35)',
+                  transition: 'all 0.2s ease',
+                }}>
+                  📁 Upload from Device
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp,image/gif"
+                    style={{ display: 'none' }}
+                    onChange={e => handleUpload(p, e.target.files[0])}
+                  />
                 </label>
+                <p style={{ fontSize: '0.62rem', opacity: 0.5, textAlign: 'center', marginTop: '0.5rem' }}>JPEG · PNG · WebP supported</p>
               </div>
               <div>
                 <p className="admin-kicker" style={{ fontSize: '0.6rem' }}>Primary Data</p>

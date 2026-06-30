@@ -1,9 +1,8 @@
 /* ═══════════════════════════════════════════════════════════════════════════
    SoulfullBites — User Dashboard Styles
    Amazon/Flipkart-inspired layout with SoulfullBites premium aesthetic
+   Shared scoped styling for Next.js App Router
 ═══════════════════════════════════════════════════════════════════════════ */
-
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
   --choc-dark:     #1a0e0a;
@@ -26,15 +25,6 @@
   --transition:    0.2s ease;
 }
 
-html, body {
-  min-height: 100vh;
-  background: var(--choc-dark);
-  color: var(--text-primary);
-  font-family: 'Outfit', system-ui, sans-serif;
-  font-size: 15px;
-}
-
-/* ── Layout ──────────────────────────────────────────────────────────────── */
 .dash-sidebar {
   position: fixed;
   top: 0; left: 0; bottom: 0;
@@ -54,7 +44,6 @@ html, body {
   max-width: 1100px;
 }
 
-/* ── Brand ───────────────────────────────────────────────────────────────── */
 .dash-brand {
   padding: 1.5rem 1.25rem 1rem;
   border-bottom: 1px solid var(--choc-border);
@@ -74,7 +63,6 @@ html, body {
 }
 @keyframes spin-slow { to { transform: rotate(360deg); } }
 
-/* ── User Card ───────────────────────────────────────────────────────────── */
 .dash-user-card {
   display: flex;
   align-items: center;
@@ -115,7 +103,6 @@ html, body {
   text-overflow: ellipsis;
 }
 
-/* Role badges */
 .dash-role-badge {
   font-size: 0.65rem;
   font-weight: 600;
@@ -129,7 +116,6 @@ html, body {
 .role-staff { background: rgba(82,125,200,0.2); color: #7ab0e8; border: 1px solid rgba(82,125,200,0.3); }
 .role-user  { background: rgba(255,255,255,0.07); color: var(--text-muted); border: 1px solid rgba(255,255,255,0.1); }
 
-/* ── Navigation ──────────────────────────────────────────────────────────── */
 .dash-nav {
   flex: 1;
   padding: 1rem 0.75rem;
@@ -177,7 +163,6 @@ html, body {
   padding: 0 5px;
 }
 
-/* ── Sidebar Footer ──────────────────────────────────────────────────────── */
 .dash-sidebar-footer {
   padding: 1rem 0.75rem;
   border-top: 1px solid var(--choc-border);
@@ -200,7 +185,6 @@ html, body {
 }
 .dash-sidebar-link:hover { color: var(--cream); background: rgba(255,255,255,0.05); }
 
-/* ── Mobile Header ───────────────────────────────────────────────────────── */
 .dash-mobile-header {
   display: none;
   position: fixed;
@@ -238,7 +222,6 @@ html, body {
   z-index: 150;
 }
 
-/* ── Sections ────────────────────────────────────────────────────────────── */
 .dash-section { display: none; animation: fade-up 0.3s ease both; }
 .dash-section.active { display: block; }
 @keyframes fade-up {
@@ -275,7 +258,6 @@ h2 {
   color: var(--cream);
 }
 
-/* ── Stats Grid ──────────────────────────────────────────────────────────── */
 .dash-stats-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -306,7 +288,6 @@ h2 {
   margin-top: 4px;
 }
 
-/* ── Card ────────────────────────────────────────────────────────────────── */
 .dash-card {
   background: var(--choc-mid);
   border: 1px solid var(--choc-border);
@@ -320,7 +301,6 @@ h2 {
   margin-bottom: 1.25rem;
 }
 
-/* ── Order List ──────────────────────────────────────────────────────────── */
 .dash-orders-filter {
   display: flex;
   gap: 0.75rem;
@@ -380,7 +360,6 @@ h2 {
 .dash-order-amount { font-size: 1rem; font-weight: 600; color: var(--gold); }
 .dash-order-actions { display: flex; gap: 0.5rem; flex-direction: column; align-items: flex-end; }
 
-/* Status badges */
 .status-badge {
   font-size: 0.7rem;
   font-weight: 600;
@@ -395,7 +374,6 @@ h2 {
 .status-delivered{ background: rgba(82,200,125,0.2); color: #3dba6f; border: 1px solid rgba(82,200,125,0.4); }
 .status-waitlist { background: rgba(255,255,255,0.08); color: var(--text-muted); border: 1px solid rgba(255,255,255,0.12); }
 
-/* ── Wishlist Grid ───────────────────────────────────────────────────────── */
 .dash-product-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
@@ -422,7 +400,6 @@ h2 {
 .dash-product-price { color: var(--gold); font-size: 0.95rem; font-weight: 600; margin-bottom: 0.75rem; }
 .dash-product-actions { display: flex; gap: 0.5rem; }
 
-/* ── Address Grid ────────────────────────────────────────────────────────── */
 .dash-address-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
@@ -455,7 +432,6 @@ h2 {
   border-top: 1px solid var(--choc-border);
 }
 
-/* ── Settings ────────────────────────────────────────────────────────────── */
 .dash-settings-card { margin-bottom: 1.5rem; }
 .dash-settings-card h2 { margin-bottom: 1.5rem; }
 .dash-danger-card {
@@ -467,7 +443,6 @@ h2 {
 .dash-danger-card h2 { color: var(--error); margin-bottom: 0.75rem; }
 .dash-danger-card p { font-size: 0.88rem; color: var(--text-muted); margin-bottom: 1.25rem; }
 
-/* ── Forms ───────────────────────────────────────────────────────────────── */
 .dash-form {
   display: flex;
   flex-direction: column;
@@ -506,7 +481,6 @@ h2 {
 .dash-form-card { margin-top: 1.5rem; }
 .dash-form-card h2 { margin-bottom: 1.5rem; }
 
-/* ── Buttons ─────────────────────────────────────────────────────────────── */
 .dash-primary-btn, .dash-cta-btn {
   background: linear-gradient(135deg, var(--gold), #b07a30);
   border: none;
@@ -572,7 +546,6 @@ h2 {
 .dash-icon-btn:hover { background: rgba(255,255,255,0.12); color: var(--cream); }
 .dash-icon-btn.danger:hover { background: rgba(224,82,82,0.15); color: var(--error); border-color: rgba(224,82,82,0.3); }
 
-/* ── Feedback Message ────────────────────────────────────────────────────── */
 .dash-message {
   padding: 0.85rem 1.25rem;
   border-radius: var(--radius-sm);
@@ -584,7 +557,6 @@ h2 {
 .dash-message.error   { background: rgba(224,82,82,0.1); border-color: var(--error); color: #f08080; }
 .dash-message.info    { background: rgba(201,148,74,0.1); border-color: var(--gold); color: var(--gold-light); }
 
-/* ── Empty States ────────────────────────────────────────────────────────── */
 .dash-empty {
   text-align: center;
   padding: 3rem 1rem;
@@ -594,7 +566,6 @@ h2 {
 .dash-empty h3 { font-size: 1rem; color: var(--cream-dim); margin-bottom: 0.5rem; }
 .dash-empty p { font-size: 0.85rem; }
 
-/* ── Loading Skeleton ────────────────────────────────────────────────────── */
 .dash-skeleton {
   background: linear-gradient(90deg, var(--choc-mid) 25%, var(--choc-surface) 50%, var(--choc-mid) 75%);
   background-size: 200% 100%;
@@ -603,10 +574,8 @@ h2 {
 }
 @keyframes shimmer { to { background-position: -200% 0; } }
 
-/* ── Utility ─────────────────────────────────────────────────────────────── */
 .hidden { display: none !important; }
 
-/* ── Responsive ──────────────────────────────────────────────────────────── */
 @media (max-width: 900px) {
   .dash-sidebar {
     transform: translateX(-100%);

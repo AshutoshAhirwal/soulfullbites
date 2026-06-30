@@ -1,9 +1,8 @@
 /* ═══════════════════════════════════════════════════════════════════════════
    SoulfullBites — Login / Register Page Styles
    Premium dark chocolate aesthetic
+   Shared scoped styling for Next.js App Router
 ═══════════════════════════════════════════════════════════════════════════ */
-
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
   --choc-dark:    #1a0e0a;
@@ -22,17 +21,6 @@
   --radius-lg:    20px;
 }
 
-html, body {
-  min-height: 100vh;
-  background: var(--choc-dark);
-  color: var(--text-primary);
-  font-family: 'Outfit', system-ui, sans-serif;
-  font-size: 15px;
-  line-height: 1.6;
-  overflow-x: hidden;
-}
-
-/* ── Animated Background ─────────────────────────────────────────── */
 .auth-bg {
   position: fixed;
   inset: 0;
@@ -72,7 +60,6 @@ html, body {
   100% { transform: translate(-20px, 30px) scale(0.95); }
 }
 
-/* ── Back Link ───────────────────────────────────────────────────── */
 .auth-back {
   position: fixed;
   top: 1.5rem; left: 1.5rem;
@@ -87,7 +74,6 @@ html, body {
 }
 .auth-back:hover { color: var(--gold); }
 
-/* ── Shell ───────────────────────────────────────────────────────── */
 .auth-shell {
   position: relative;
   z-index: 1;
@@ -96,7 +82,6 @@ html, body {
   min-height: 100vh;
 }
 
-/* ── Brand Panel ─────────────────────────────────────────────────── */
 .auth-brand-panel {
   background: linear-gradient(160deg, #2d1a12 0%, #1a0e0a 100%);
   border-right: 1px solid rgba(201, 148, 74, 0.12);
@@ -177,7 +162,6 @@ html, body {
   color: var(--text-muted);
 }
 
-/* ── Form Panel ──────────────────────────────────────────────────── */
 .auth-form-panel {
   background: var(--choc-dark);
   display: flex;
@@ -190,7 +174,6 @@ html, body {
   max-width: 420px;
 }
 
-/* ── Tabs ─────────────────────────────────────────────────────────── */
 .auth-tabs {
   position: relative;
   display: flex;
@@ -231,7 +214,6 @@ html, body {
   transform: translateX(100%);
 }
 
-/* ── Panels ──────────────────────────────────────────────────────── */
 .auth-panel {
   display: none;
   animation: fade-up 0.3s ease both;
@@ -242,7 +224,6 @@ html, body {
   to   { opacity: 1; transform: translateY(0); }
 }
 
-/* ── Form Fields ─────────────────────────────────────────────────── */
 .auth-form {
   display: flex;
   flex-direction: column;
@@ -290,7 +271,6 @@ html, body {
   box-shadow: 0 0 0 3px rgba(224, 82, 82, 0.12);
 }
 
-/* Password toggle */
 .auth-password-wrap {
   position: relative;
 }
@@ -307,7 +287,6 @@ html, body {
 }
 .auth-toggle-pw:hover { color: var(--gold); }
 
-/* Password strength */
 .auth-pw-strength {
   display: flex;
   align-items: center;
@@ -334,7 +313,6 @@ html, body {
   text-align: right;
 }
 
-/* Forgot link */
 .auth-forgot-link {
   background: none; border: none;
   color: var(--gold);
@@ -346,7 +324,6 @@ html, body {
 }
 .auth-forgot-link:hover { opacity: 0.75; }
 
-/* Checkbox */
 .auth-checkbox {
   display: flex;
   align-items: center;
@@ -362,7 +339,6 @@ html, body {
 }
 .auth-checkbox a { color: var(--gold); }
 
-/* ── Submit Button ───────────────────────────────────────────────── */
 .auth-submit-btn {
   width: 100%;
   padding: 0.95rem;
@@ -394,7 +370,6 @@ html, body {
 .auth-submit-btn:active { transform: scale(0.98); }
 .auth-submit-btn:disabled { opacity: 0.6; cursor: not-allowed; }
 
-/* Spinner */
 .auth-btn-spinner {
   width: 18px; height: 18px;
   border: 2px solid rgba(0,0,0,0.3);
@@ -404,7 +379,6 @@ html, body {
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* ── Switch prompt ───────────────────────────────────────────────── */
 .auth-switch {
   text-align: center;
   margin-top: 1.5rem;
@@ -423,7 +397,6 @@ html, body {
 }
 .auth-switch-btn:hover { opacity: 0.75; }
 
-/* ── Message banner ──────────────────────────────────────────────── */
 .auth-message {
   padding: 0.8rem 1rem;
   border-radius: var(--radius-sm);
@@ -443,7 +416,6 @@ html, body {
 }
 .hidden { display: none !important; }
 
-/* ── Responsive ──────────────────────────────────────────────────── */
 @media (max-width: 860px) {
   .auth-shell { grid-template-columns: 1fr; }
   .auth-brand-panel { display: none; }

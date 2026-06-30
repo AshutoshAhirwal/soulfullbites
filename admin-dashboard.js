@@ -16,9 +16,6 @@ const passwordInput = document.getElementById('admin-password');
 const logoutBtn = document.getElementById('admin-logout');
 
 // Orders Filters
-const searchInput = document.getElementById('admin-search');
-const paymentFilterInput = document.getElementById('admin-payment-filter');
-const sortFilterInput = document.getElementById('admin-sort-filter');
 const orderDateFilterInput = document.getElementById('admin-date-filter');
 
 // Product Filters

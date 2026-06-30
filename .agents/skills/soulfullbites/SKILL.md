@@ -9,67 +9,77 @@ This skill provides the necessary context and instructions to maintain, debug, a
 
 ## 🏗️ Project Architecture
 
-SoulfullBites is a modern e-commerce application built with a focus on immersive 3D storytelling and a serverless backend.
+SoulfullBites is a modern e-commerce application built with a focus on immersive 3D storytelling and a role-based serverless backend.
 
-- **Frontend**: Vite-powered SPA with Three.js, GSAP, and Lenis for smooth scrolling.
-- **Backend**: Serverless functions (Vercel style) located in the `/api` directory.
-- **Database**: PostgreSQL hosted on Neon, accessed via `@neondatabase/serverless`.
-- **Emails**: Transactional emails powered by Resend; client-side feedback via EmailJS.
+- **Frontend & Routing**: Next.js App Router (React) centered at `/app`. Home page uses Three.js, GSAP, and Lenis for scrollytelling (`home-scene.js`).
+- **Backend APIs**: Next.js App routes located in `app/api/`.
+- **Database**: PostgreSQL hosted on Neon, accessed via `@neondatabase/serverless` using custom Google DNS resolution patch to bypass local ISP constraints.
+- **Emails**: Transactional emails powered by Resend with safe recipient filtering in test modes (`lib/emails.js`).
+- **Payments**: Razorpay integration for INR payments (`app/api/checkout/[action]/route.js`).
+
+---
 
 ## 🎨 Frontend Development
 
 ### Three.js Scene (`home-scene.js`)
-The immersive experience is managed by the `ChocolateScene` class.
-- **Stations**: The scrollytelling follows "stations" (sections) mapped to `scrollP` (0 to 1).
-- **Hero Element**: The breaking chocolate bar is a `Group` containing left/right halves, drips, and crumbs.
-- **Assets**: 3D textures and image planes are loaded from `/assets`.
+The immersive 3D experience is managed by the `ChocolateScene` class.
+- **Stations**: Scrollytelling follows "stations" (sections) mapped to `scrollP` (0 to 1).
+- **Hero Element**: Breaking chocolate bar is a `Group` containing left/right halves, drips, and crumbs.
+- **Assets**: 3D textures, models, and image planes are loaded from `/assets` (served from `/public` in Next.js).
 - **Particles**: Bokeh and dust particles enhance the atmosphere.
 
 **Key Task: Adding a Section**
-1. Add a `.scroll-section` in `index.html`.
+1. Add a section markup in `app/page.js`.
 2. Update the `stations` array and `ScrollTrigger` logic in `home-scene.js` -> `bindScroll()`.
-3. If a new 3D element is needed, add it in the `loop()` or as a new `build...` method.
+3. If a new 3D element is needed, add it in the render `loop()` or as a new `build...` method.
 
-### Styling (`style.css`)
-The site uses a premium, artisanal design system with:
-- **Colors**: Rich browns (`--choc-dark`), golds (`--gold`), and creams.
-- **Typography**: Editorial-grade serif and modern sans-serif.
+---
 
-## 📦 Order & Inventory Management
+## 📦 Database & Catalog Management
 
-### Shop & Cart (`main.js`)
+All database schemas are initialized programmatically in [lib/db.js](file:///Users/ashutoshahirwal/Drupal%20Projects/soulfullbites/lib/db.js).
+
+### Products & Cart
 - **Cart**: Managed via `BAG_STORAGE_KEY` (localStorage).
-- **Products**: Defined statically in `shop.html` data-attributes on `.product-card`.
+- **Products**: Stored in Neon DB `products` table. Falls back to static `DEFAULT_PRODUCTS` in `lib/products.js` if the database is unconfigured.
+- **Dynamic CMS**: Static string properties on the frontend pull from the `site_content` table via `GET /api/content`.
 
-**Add/Update Product**:
-Edit `shop.html` and update the `data-id`, `data-name`, and `data-price` on the product card.
+**Upserting Products**:
+To add or edit products, use the admin dashboard or POST to `/api/admin/products`.
 
-### Order Processing (`api/send-order.js`)
-Orders are sent to this endpoint via POST.
-1. Validates input.
-2. Creates an order record in Neon DB (`api/_lib/orders.js`).
-3. Sends a notification email to the owner.
-4. Sends a confirmation email to the customer (if enabled/verified).
+---
 
-## 🔐 Admin Dashboard
+## 🔐 Authentication, RBAC & Security
 
-The dashboard is located at `/admin.html`.
-- **Status**: Orders can be marked as 'new', 'shipped', or 'delivered'.
-- **Persistence**: Updates are saved directly to the Neon DB via `api/admin-order-update.js`.
+The system employs a JWT session system signed via `jose` and stored in a secure cookie `soulfull_user_session`.
+
+### Roles & Permissions (`lib/permissions.js`)
+- **`ashu`**: Owner/Admin role. Bypasses permission checks (has full permissions).
+- **`staff`**: Administrative staff. Can view orders, moderate reviews, edit products, upload files, and alter CMS.
+- **`user`**: Default customer role. Can manage own addresses, wishlist, and check personal order histories.
+
+### Security Defenses (`lib/security.js`)
+- **Turnstile CAPTCHA**: Used on checkout and waitlist actions. Set `TURNSTILE_SECRET_KEY` in environment variables to enforce.
+- **Honeypot Verification**: Validated by `checkHoneypot(body)` and `hasFilledHoneypot(value)` functions.
+- **IP Rate Limiting**: Tracked dynamically in-memory using sliding-window timers.
+
+---
 
 ## 🛠️ Configuration (Environment Variables)
 
-Ensure the following are set in `.env.local` or deployment platform:
+Ensure the following are set in `.env.local`:
 - `DATABASE_URL`: Neon PostgreSQL connection string.
-- `RESEND_API_KEY`: API key for email delivery.
+- `JWT_SECRET` / `ADMIN_SESSION_SECRET`: Session signature key.
+- `RAZORPAY_KEY_ID`: Razorpay public API key.
+- `RAZORPAY_KEY_SECRET`: Razorpay secret API key.
+- `RESEND_API_KEY`: API key for Resend email delivery.
 - `RESEND_OWNER_EMAILS`: Comma-separated list of admin email recipients.
 - `RESEND_FROM_EMAIL`: The "From" address for customer emails.
 
+---
+
 ## 🔍 Debugging Tips
 
-- **3D Issues**: Check the browser console for Three.js loader errors or WebGL context losses.
-- **API Failures**: Inspect the Network tab for responses from `/api/send-order`. Most errors are logged with descriptive messages.
-- **Database**: Use the Neon console to inspect the `orders` table if records aren't showing in the admin dashboard.
-
----
-*Created by Antigravity for SoulfullBites.*
+- **Next.js Compilation / Building**: Run `npm run build` or `npm run dev`. Ensure `lib/security.js` exports `hasFilledHoneypot` and `verifyTurnstile` as they are key dependencies for routing checkout handlers.
+- **Database Schema Errors**: If table modifications are required, add `ALTER TABLE` operations within `ensureOrdersTable()` in `lib/db.js` to run migration scripts dynamically.
+- **Vercel Deployments**: The project compiles under Next.js. Deploy configuration is in `vercel.json`.
