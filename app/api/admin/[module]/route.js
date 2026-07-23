@@ -3,6 +3,7 @@ import { dbQuery, ensureOrdersTable, ensureUsersTable } from '@/lib/db';
 import { batchUpdateContent } from '@/lib/content';
 import { hasPermission } from '@/lib/permissions';
 import { hashPassword } from '@/lib/user-auth';
+import { sanitizeError } from '@/lib/security';
 import crypto from 'node:crypto';
 
 // ── GET HANDLER ─────────────────────────────────────────────────────────────
@@ -36,9 +37,11 @@ export async function GET(request, { params }) {
       else if (dateFilter === 'month') conditions.push(`created_at >= CURRENT_DATE - INTERVAL '30 days'`);
 
       const [sortField, sortDir] = sort.split(':');
-      const orderBy = sortField === 'total_amount' ? `total_amount ${sortDir === 'asc' ? 'ASC' : 'DESC'}` : `created_at ${sortDir === 'asc' ? 'ASC' : 'DESC'}`;
+      const orderBy = sortField === 'total_amount'
+        ? `total_amount ${sortDir === 'asc' ? 'ASC' : 'DESC'}`
+        : `created_at ${sortDir === 'asc' ? 'ASC' : 'DESC'}`;
       const where = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
-      
+
       const rows = await dbQuery(`SELECT * FROM orders ${where} ORDER BY ${orderBy} LIMIT 500`, values);
       const orders = rows.map(r => ({
         id: r.id,
@@ -53,7 +56,9 @@ export async function GET(request, { params }) {
         createdAt: r.created_at
       }));
       return NextResponse.json({ success: true, orders });
-    } catch (err) { return NextResponse.json({ error: err.message }, { status: 500 }); }
+    } catch (err) {
+      return NextResponse.json({ error: sanitizeError(err, 'admin-orders-get') }, { status: 500 });
+    }
   }
 
   // 2. PRODUCTS MODULE
@@ -62,7 +67,9 @@ export async function GET(request, { params }) {
     try {
       const rows = await dbQuery('SELECT * FROM products ORDER BY name ASC');
       return NextResponse.json(rows);
-    } catch (err) { return NextResponse.json({ error: err.message }, { status: 500 }); }
+    } catch (err) {
+      return NextResponse.json({ error: sanitizeError(err, 'admin-products-get') }, { status: 500 });
+    }
   }
 
   // 3. USERS MODULE
@@ -71,8 +78,10 @@ export async function GET(request, { params }) {
     try {
       await ensureUsersTable();
       const rows = await dbQuery('SELECT id, email, name, role, is_active, created_at FROM users ORDER BY created_at DESC');
-      return NextResponse.json({ success: true, users: rows });
-    } catch (err) { return NextResponse.json({ error: err.message }, { status: 500 }); }
+      return NextResponse.json({ success: true, users: rows.map(u => ({ ...u, createdAt: u.created_at })) });
+    } catch (err) {
+      return NextResponse.json({ error: sanitizeError(err, 'admin-users-get') }, { status: 500 });
+    }
   }
 
   return NextResponse.json({ error: 'Module not found' }, { status: 404 });
@@ -89,24 +98,32 @@ export async function POST(request, { params }) {
       const { updates } = await request.json();
       await batchUpdateContent(updates);
       return NextResponse.json({ success: true });
-    } catch (err) { return NextResponse.json({ error: err.message }, { status: 500 }); }
+    } catch (err) {
+      return NextResponse.json({ error: sanitizeError(err, 'admin-content-post') }, { status: 500 });
+    }
   }
 
-  // 2. PRODUCTS MODULE (SAVE)
+  // 2. PRODUCTS MODULE (SAVE / UPSERT)
   if (module === 'products') {
     if (!(await hasPermission('products.edit'))) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     try {
       const p = await request.json();
       const existing = await dbQuery('SELECT id FROM products WHERE id = $1', [p.id]);
       if (existing.length > 0) {
-        await dbQuery(`UPDATE products SET name=$1, price=$2, is_active=$3, description=$4, image_slug=$5, ingredients=$6 WHERE id=$7`,
-          [p.name, p.price, p.is_active, p.description, p.image_slug, p.ingredients || '', p.id]);
+        await dbQuery(
+          `UPDATE products SET name=$1, price=$2, is_active=$3, description=$4, image_slug=$5, ingredients=$6 WHERE id=$7`,
+          [p.name, p.price, p.is_active, p.description, p.image_slug, p.ingredients || '', p.id]
+        );
       } else {
-        await dbQuery(`INSERT INTO products (id, name, price, is_active, description, image_slug, ingredients) VALUES ($1,$2,$3,$4,$5,$6,$7)`,
-          [p.id, p.name, p.price, p.is_active, p.description, p.image_slug, p.ingredients || '']);
+        await dbQuery(
+          `INSERT INTO products (id, name, price, is_active, description, image_slug, ingredients) VALUES ($1,$2,$3,$4,$5,$6,$7)`,
+          [p.id, p.name, p.price, p.is_active, p.description, p.image_slug, p.ingredients || '']
+        );
       }
       return NextResponse.json({ success: true });
-    } catch (err) { return NextResponse.json({ error: err.message }, { status: 500 }); }
+    } catch (err) {
+      return NextResponse.json({ error: sanitizeError(err, 'admin-products-post') }, { status: 500 });
+    }
   }
 
   // 3. UPLOAD MODULE
@@ -117,7 +134,9 @@ export async function POST(request, { params }) {
       const result = await dbQuery('INSERT INTO media (original_name, data) VALUES ($1, $2) RETURNING id', [name || 'upload', base64]);
       const mediaId = result[0]?.id;
       return NextResponse.json({ success: true, path: `/api/media/${mediaId}`, mediaId });
-    } catch (err) { return NextResponse.json({ error: err.message }, { status: 500 }); }
+    } catch (err) {
+      return NextResponse.json({ error: sanitizeError(err, 'admin-upload-post') }, { status: 500 });
+    }
   }
 
   // 4. FAQ MODULE
@@ -127,12 +146,41 @@ export async function POST(request, { params }) {
       const f = await request.json();
       const existing = await dbQuery('SELECT id FROM faq_items WHERE id = $1', [f.id]);
       if (existing.length > 0) {
-        await dbQuery(`UPDATE faq_items SET category=$1, question=$2, answer=$3, sort_order=$4 WHERE id=$5`, [f.category, f.question, f.answer, f.sort_order, f.id]);
+        await dbQuery(
+          `UPDATE faq_items SET category=$1, question=$2, answer=$3, sort_order=$4 WHERE id=$5`,
+          [f.category, f.question, f.answer, f.sort_order, f.id]
+        );
       } else {
-        await dbQuery(`INSERT INTO faq_items (id, category, question, answer, sort_order) VALUES ($1,$2,$3,$4,$5)`, [f.id, f.category, f.question, f.answer, f.sort_order]);
+        await dbQuery(
+          `INSERT INTO faq_items (id, category, question, answer, sort_order) VALUES ($1,$2,$3,$4,$5)`,
+          [f.id, f.category, f.question, f.answer, f.sort_order]
+        );
       }
       return NextResponse.json({ success: true });
-    } catch (err) { return NextResponse.json({ error: err.message }, { status: 500 }); }
+    } catch (err) {
+      return NextResponse.json({ error: sanitizeError(err, 'admin-faq-post') }, { status: 500 });
+    }
+  }
+
+  // 5. USERS MODULE (CREATE STAFF)
+  if (module === 'users') {
+    if (!(await hasPermission('users.create'))) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    try {
+      const { email, name, password, role } = await request.json();
+      if (!email || !password) {
+        return NextResponse.json({ error: 'Email and password are required' }, { status: 400 });
+      }
+      await ensureUsersTable();
+      const id = `USR-${Date.now().toString(36)}-${crypto.randomBytes(3).toString('hex')}`;
+      const passwordHash = await hashPassword(password);
+      await dbQuery(
+        `INSERT INTO users (id, email, name, password_hash, role) VALUES ($1, $2, $3, $4, $5)`,
+        [id, email.toLowerCase().trim(), name || 'Staff', passwordHash, role || 'staff']
+      );
+      return NextResponse.json({ success: true, id });
+    } catch (err) {
+      return NextResponse.json({ error: sanitizeError(err, 'admin-users-post') }, { status: 500 });
+    }
   }
 
   return NextResponse.json({ error: 'Module not found' }, { status: 404 });
@@ -148,7 +196,9 @@ export async function PATCH(request, { params }) {
       const { id, status } = await request.json();
       await dbQuery('UPDATE orders SET status = $1 WHERE id = $2', [status, id]);
       return NextResponse.json({ success: true });
-    } catch (err) { return NextResponse.json({ error: err.message }, { status: 500 }); }
+    } catch (err) {
+      return NextResponse.json({ error: sanitizeError(err, 'admin-orders-patch') }, { status: 500 });
+    }
   }
 
   return NextResponse.json({ error: 'Module not found' }, { status: 404 });
@@ -162,14 +212,32 @@ export async function DELETE(request, { params }) {
 
   if (module === 'products') {
     if (!(await hasPermission('products.delete'))) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-    await dbQuery('DELETE FROM products WHERE id = $1', [id]);
-    return NextResponse.json({ success: true });
+    try {
+      await dbQuery('DELETE FROM products WHERE id = $1', [id]);
+      return NextResponse.json({ success: true });
+    } catch (err) {
+      return NextResponse.json({ error: sanitizeError(err, 'admin-products-delete') }, { status: 500 });
+    }
   }
 
   if (module === 'faq') {
     if (!(await hasPermission('cms.edit'))) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-    await dbQuery('DELETE FROM faq_items WHERE id = $1', [id]);
-    return NextResponse.json({ success: true });
+    try {
+      await dbQuery('DELETE FROM faq_items WHERE id = $1', [id]);
+      return NextResponse.json({ success: true });
+    } catch (err) {
+      return NextResponse.json({ error: sanitizeError(err, 'admin-faq-delete') }, { status: 500 });
+    }
+  }
+
+  if (module === 'users') {
+    if (!(await hasPermission('users.delete'))) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    try {
+      await dbQuery('DELETE FROM users WHERE id = $1', [id]);
+      return NextResponse.json({ success: true });
+    } catch (err) {
+      return NextResponse.json({ error: sanitizeError(err, 'admin-users-delete') }, { status: 500 });
+    }
   }
 
   return NextResponse.json({ error: 'Module not found' }, { status: 404 });

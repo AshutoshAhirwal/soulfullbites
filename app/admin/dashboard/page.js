@@ -539,14 +539,14 @@ function ProductsModule({ setState }) {
               <div>
                 <p className="admin-kicker" style={{ fontSize: '0.6rem' }}>Specs & Price</p>
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                  <label className="admin-field"><span>Price (₹)</span><input type="number" value={p.price} onChange={e => setProducts(prev => prev.map(item => item.id === p.id ? { ...item, price: parseInt(e.target.value) } : item))} /></label>
+                  <label className="admin-field"><span>Price (₹)</span><input type="number" value={p.price} onChange={e => setProducts(prev => prev.map(item => item.id === p.id ? { ...item, price: parseInt(e.target.value, 10) } : item))} /></label>
                   <label className="admin-field"><span>Status</span><select value={p.is_active ? 'true' : 'false'} onChange={e => setProducts(prev => prev.map(item => item.id === p.id ? { ...item, is_active: e.target.value === 'true' } : item))}>
                     <option value="true">Active</option><option value="false">Hidden</option></select></label>
                 </div>
                 <label className="admin-field"><span>Ingredients</span><textarea value={p.ingredients || ''} onChange={e => setProducts(prev => prev.map(item => item.id === p.id ? { ...item, ingredients: e.target.value } : item))} /></label>
                 <div style={{ display: 'flex', gap: '0.5rem', marginTop: '1rem' }}>
                   <button onClick={() => handleSave(p)} className="admin-primary-btn" style={{ flex: 1 }}>Save Changes</button>
-                  <button onClick={async () => { if (confirm('Delete?')) { await fetch(`/api/admin/products?id=${p.id}`, { method: 'DELETE' }); fetchProducts(); } }} className="admin-ghost-btn" style={{ color: '#9d3030' }}>✕</button>
+                  <button onClick={async () => { if (confirm('Delete this product?')) { try { await fetch(`/api/admin/products?id=${p.id}`, { method: 'DELETE' }); fetchProducts(); } catch (err) { setState('Delete failed'); } } }} className="admin-ghost-btn" style={{ color: '#9d3030' }}>✕</button>
                 </div>
               </div>
             </div>
@@ -565,29 +565,50 @@ function ContentModule({ setState }) {
   const [activeTab, setActiveTab] = useState('page-home');
 
   const fetchData = async () => {
-    const [cRes, fRes] = await Promise.all([
-      fetch('/api/content'),
-      fetch('/api/content?section=faq')
-    ]);
-    const cData = await cRes.json();
-    const fData = await fRes.json();
-    setContent(cData || {});
-    setFaqs(Array.isArray(fData) ? fData : []);
-    setLoading(false);
+    try {
+      const [cRes, fRes] = await Promise.all([
+        fetch('/api/content'),
+        fetch('/api/content?section=faq')
+      ]);
+      const cData = await cRes.json();
+      const fData = await fRes.json();
+      setContent(cData || {});
+      setFaqs(Array.isArray(fData) ? fData : []);
+    } catch (err) {
+      setState('Failed to load content');
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => { fetchData(); }, []);
 
   const save = async () => {
     setState('Saving...', 'success');
-    await fetch('/api/admin/content', { method: 'POST', body: JSON.stringify({ updates: content }) });
-    setState('Site updated ✓', 'success');
+    try {
+      await fetch('/api/admin/content', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ updates: content })
+      });
+      setState('Site updated ✓', 'success');
+    } catch (err) {
+      setState('Save failed');
+    }
   };
 
   const saveFaq = async (faq) => {
-    await fetch('/api/admin/faq', { method: 'POST', body: JSON.stringify(faq) });
-    setState('FAQ saved', 'success');
-    fetchData();
+    try {
+      await fetch('/api/admin/faq', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(faq)
+      });
+      setState('FAQ saved', 'success');
+      fetchData();
+    } catch (err) {
+      setState('FAQ save failed');
+    }
   };
 
   return (
@@ -621,10 +642,10 @@ function ContentModule({ setState }) {
                     </div>
                     <label className="admin-field"><span>Answer</span><textarea value={f.answer} onChange={e => setFaqs(prev => prev.map(item => item.id === f.id ? { ...item, answer: e.target.value } : item))} /></label>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <label className="admin-field" style={{ width: '80px' }}><span>Sort</span><input type="number" value={f.sort_order} onChange={e => setFaqs(prev => prev.map(item => item.id === f.id ? { ...item, sort_order: parseInt(e.target.value) } : item))} /></label>
+                      <label className="admin-field" style={{ width: '80px' }}><span>Sort</span><input type="number" value={f.sort_order} onChange={e => setFaqs(prev => prev.map(item => item.id === f.id ? { ...item, sort_order: parseInt(e.target.value, 10) } : item))} /></label>
                       <div style={{ display: 'flex', gap: '0.5rem' }}>
                         <button onClick={() => saveFaq(f)} className="admin-primary-btn" style={{ padding: '0.4rem 1rem' }}>Save</button>
-                        <button onClick={async () => { if (confirm('Delete?')) { await fetch(`/api/admin/faq?id=${f.id}`, { method: 'DELETE' }); fetchData(); } }} className="admin-ghost-btn" style={{ color: '#9d3030' }}>✕</button>
+                        <button onClick={async () => { if (confirm('Delete this FAQ?')) { try { await fetch(`/api/admin/faq?id=${f.id}`, { method: 'DELETE' }); fetchData(); } catch (err) { setState('Delete failed'); } } }} className="admin-ghost-btn" style={{ color: '#9d3030' }}>✕</button>
                       </div>
                     </div>
                   </div>
@@ -660,10 +681,15 @@ function UsersModule({ setState }) {
   const [loading, setLoading] = useState(true);
 
   const fetchUsers = async () => {
-    const res = await fetch('/api/admin/users');
-    const data = await res.json();
-    setUsers(data.users || []);
-    setLoading(false);
+    try {
+      const res = await fetch('/api/admin/users');
+      const data = await res.json();
+      setUsers(data.users || []);
+    } catch (err) {
+      setState('Failed to load users');
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => { fetchUsers(); }, []);
@@ -674,8 +700,20 @@ function UsersModule({ setState }) {
         <div className="admin-module-title">User Management</div>
         <button className="admin-primary-btn" onClick={async () => {
           const email = prompt('Email?');
-          if (email) await fetch('/api/admin/users', { method: 'POST', body: JSON.stringify({ email, name: 'New Staff', password: 'password123', role: 'staff' }) });
-          fetchUsers();
+          if (!email) return;
+          // Generate a random temporary password — never hardcode credentials
+          const tempPass = crypto.randomUUID().replace(/-/g, '').slice(0, 10) + 'A1!';
+          try {
+            const res = await fetch('/api/admin/users', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ email, name: 'New Staff', password: tempPass, role: 'staff' })
+            });
+            if (res.ok) {
+              alert(`Staff added. Temporary password: ${tempPass}\nPlease share securely and ask them to change it.`);
+              fetchUsers();
+            }
+          } catch (err) { setState('Failed to add staff'); }
         }}>+ Add Staff</button>
       </div>
 
@@ -686,7 +724,7 @@ function UsersModule({ setState }) {
         {loading ? <p style={{ padding: '2rem' }}>Loading Staff...</p> : users.map(u => (
           <div key={u.id} className="admin-table-row" style={{ display: 'grid', gridTemplateColumns: '2fr 2fr 1fr 1fr 80px' }}>
             <strong>{u.name}</strong><span>{u.email}</span><span>{u.role}</span><span>{new Date(u.createdAt).toLocaleDateString()}</span>
-            <button onClick={async () => { if (confirm('Delete?')) { await fetch(`/api/admin/users?id=${u.id}`, { method: 'DELETE' }); fetchUsers(); } }} style={{ background: 'none', border: 'none', color: '#9d3030', cursor: 'pointer' }}>✕</button>
+            <button onClick={async () => { if (confirm('Delete this user?')) { try { await fetch(`/api/admin/users?id=${u.id}`, { method: 'DELETE' }); fetchUsers(); } catch (err) { setState('Delete failed'); } } }} style={{ background: 'none', border: 'none', color: '#9d3030', cursor: 'pointer' }}>✕</button>
           </div>
         ))}
       </div>
