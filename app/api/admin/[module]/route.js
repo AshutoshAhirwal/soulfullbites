@@ -107,7 +107,7 @@ export async function GET(request, { params }) {
   }
 
   if (module === 'products') {
-    return withHandler('products.view', 'admin-products-get', async () => {
+    return withHandler('products.edit', 'admin-products-get', async () => {
       const rows = await dbQuery('SELECT * FROM products ORDER BY name ASC');
       return NextResponse.json(rows);
     });

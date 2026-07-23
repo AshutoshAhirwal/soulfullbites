@@ -10,18 +10,34 @@ export async function GET() {
     }
 
     const userId = user.sub;
-    const userEmail = user.email;
+    const userEmail = user.email ? user.email.toLowerCase().trim() : '';
+    const isStaffOrOwner = user.role === 'ashu' || user.role === 'staff';
 
     await ensureUsersTable();
     await ensureOrdersTable();
 
-    const rows = await dbQuery(`
+    // If owner (ashu) or staff, show all orders so they see all shop orders in dashboard.
+    // For regular customers, match by user_id or customer_email (case-insensitive).
+    let query = `
       SELECT *
       FROM orders
-      WHERE user_id = $1 OR customer_email = $2
+      WHERE user_id = $1 OR LOWER(customer_email) = $2
       ORDER BY created_at DESC
       LIMIT 50
-    `, [userId, userEmail]);
+    `;
+    let params = [userId, userEmail];
+
+    if (isStaffOrOwner) {
+      query = `
+        SELECT *
+        FROM orders
+        ORDER BY created_at DESC
+        LIMIT 50
+      `;
+      params = [];
+    }
+
+    const rows = await dbQuery(query, params);
 
     const orders = rows.map((r) => ({
       id: r.id,
@@ -31,6 +47,8 @@ export async function GET() {
       items: (() => { try { return JSON.parse(r.items_json); } catch { return []; } })(),
       totalDisplay: r.total_display,
       totalAmount: Number(r.total_amount),
+      customerName: r.customer_name,
+      customerEmail: r.customer_email,
       createdAt: r.created_at,
       updatedAt: r.updated_at,
     }));
