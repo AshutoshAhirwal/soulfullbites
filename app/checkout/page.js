@@ -9,6 +9,7 @@ const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || '0x4AAA
 
 export default function CheckoutPage() {
   const [cart, setCart] = useState([]);
+  const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
   // Form Fields
@@ -30,6 +31,19 @@ export default function CheckoutPage() {
   const widgetIdRef = useRef(null);
 
   useEffect(() => {
+    // 0. Check User Session & pre-fill details if available
+    fetch('/api/user-auth')
+      .then(res => res.json())
+      .then(data => {
+        if (data?.user) {
+          setUser(data.user);
+          if (data.user.name) setName(prev => prev || data.user.name);
+          if (data.user.email) setEmail(prev => prev || data.user.email);
+          if (data.user.phone) setPhone(prev => prev || data.user.phone);
+        }
+      })
+      .catch(() => {});
+
     // Load Cart from localStorage
     const savedCart = localStorage.getItem(BAG_STORAGE_KEY);
     if (savedCart) {
@@ -197,6 +211,9 @@ export default function CheckoutPage() {
           </div>
           <div className="nav-links">
             <Link href="/shop" className="nav-link">Back to Shop</Link>
+            <Link href={user ? "/dashboard" : "/login"} className="nav-link">
+              {user ? 'Account' : 'Login'}
+            </Link>
           </div>
           <div className="nav-right">
             <a href="https://www.instagram.com/soulfulbitesofficial/" target="_blank" rel="noopener noreferrer" className="nav-insta">Instagram ↗</a>

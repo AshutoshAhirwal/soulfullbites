@@ -9,6 +9,7 @@ export default function ShopPage() {
   const [content, setContent] = useState({});
   const [products, setProducts] = useState([]);
   const [reviews, setReviews] = useState([]);
+  const [user, setUser] = useState(null);
   const [cart, setCart] = useState([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isReviewFormOpen, setIsReviewFormOpen] = useState(false);
@@ -23,6 +24,11 @@ export default function ShopPage() {
   const [reviewMessageType, setReviewMessageType] = useState('error');
 
   useEffect(() => {
+    // 0. Check User Session
+    fetch('/api/user-auth')
+      .then(res => res.json())
+      .then(data => { if (data?.user) setUser(data.user); })
+      .catch(() => {});
     // 1. Fetch CMS Content
     const fetchContent = async () => {
       try {
@@ -178,6 +184,9 @@ export default function ShopPage() {
           <Link href="/shop" className="nav-link active">Shop</Link>
           <Link href="/inspiration" className="nav-link">Inspiration</Link>
           <Link href="/faq" className="nav-link">FAQ</Link>
+          <Link href={user ? "/dashboard" : "/login"} className="nav-link">
+            {user ? 'Account' : 'Login'}
+          </Link>
         </div>
         <div className="nav-right">
           <button onClick={() => setIsCartOpen(true)} id="cart-toggle" style={{ background: 'none', border: 'none', fontSize: '1.2rem', cursor: 'pointer', color: 'var(--choc-dark)', position: 'relative' }}>
@@ -414,6 +423,7 @@ export default function ShopPage() {
                 <li><Link href="/shop" style={{ color: 'inherit', textDecoration: 'none', opacity: 0.7, fontSize: '0.9rem' }}>Shop</Link></li>
                 <li><Link href="/inspiration" style={{ color: 'inherit', textDecoration: 'none', opacity: 0.7, fontSize: '0.9rem' }}>Inspiration</Link></li>
                 <li><Link href="/faq" style={{ color: 'inherit', textDecoration: 'none', opacity: 0.7, fontSize: '0.9rem' }}>FAQ</Link></li>
+                <li><Link href={user ? "/dashboard" : "/login"} style={{ color: 'inherit', textDecoration: 'none', opacity: 0.7, fontSize: '0.9rem' }}>{user ? 'Account' : 'Login'}</Link></li>
               </ul>
             </div>
             <div>

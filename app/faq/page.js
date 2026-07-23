@@ -6,10 +6,17 @@ import Link from 'next/link';
 export default function FAQPage() {
   const [content, setContent] = useState({});
   const [faqs, setFaqs] = useState([]);
+  const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [activeFaqId, setActiveFaqId] = useState(null);
 
   useEffect(() => {
+    // 0. Check User Session
+    fetch('/api/user-auth')
+      .then(res => res.json())
+      .then(data => { if (data?.user) setUser(data.user); })
+      .catch(() => {});
+
     // 1. Fetch CMS Content
     const fetchContent = async () => {
       try {
@@ -229,6 +236,9 @@ export default function FAQPage() {
             <Link href="/shop" className="nav-link">Shop</Link>
             <Link href="/inspiration" className="nav-link">Inspiration</Link>
             <Link href="/faq" className="nav-link active">FAQ</Link>
+            <Link href={user ? "/dashboard" : "/login"} className="nav-link">
+              {user ? 'Account' : 'Login'}
+            </Link>
           </div>
           <div className="nav-right">
             <a href={t('insta_link', 'https://www.instagram.com/soulfulbitesofficial/')} target="_blank" rel="noopener noreferrer" className="nav-insta">
@@ -297,6 +307,7 @@ export default function FAQPage() {
                   <li><Link href="/shop" style={{ color: 'inherit', textDecoration: 'none', opacity: 0.7, fontSize: '0.9rem' }}>Shop</Link></li>
                   <li><Link href="/inspiration" style={{ color: 'inherit', textDecoration: 'none', opacity: 0.7, fontSize: '0.9rem' }}>Inspiration</Link></li>
                   <li><Link href="/faq" style={{ color: 'inherit', textDecoration: 'none', opacity: 0.7, fontSize: '0.9rem' }}>FAQ</Link></li>
+                  <li><Link href={user ? "/dashboard" : "/login"} style={{ color: 'inherit', textDecoration: 'none', opacity: 0.7, fontSize: '0.9rem' }}>{user ? 'Account' : 'Login'}</Link></li>
                 </ul>
               </div>
               <div>
