@@ -4,9 +4,10 @@ import crypto from 'node:crypto';
 import { dbQuery, ensureOrdersTable } from '@/lib/db';
 import { buildOrderRecord, createOrder, getOrderById, updatePaymentStatus } from '@/lib/orders';
 import { getProducts, seedProducts } from '@/lib/products';
-import { hasFilledHoneypot, verifyTurnstile } from '@/lib/security';
+import { hasFilledHoneypot, verifyTurnstile, sanitizeError } from '@/lib/security';
 import { sendOrderEmails, getEmailSettings } from '@/lib/emails';
 import { Resend } from 'resend';
+import { validateEmail, validateText } from '@/lib/validation';
 
 const cleanText = (value) => (typeof value === 'string' ? value.trim() : '');
 const isValidEmail = (value) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanText(value));
@@ -31,6 +32,15 @@ export async function POST(request, { params }) {
     const { user_name, user_email, user_phone, user_address, user_city, user_zip, bag_items, user_note, source, security_token, hp_data } = body;
     if (hasFilledHoneypot(hp_data)) return NextResponse.json({ success: true, ignored: true });
     if (!(await verifyTurnstile(security_token))) return NextResponse.json({ error: 'Security failed' }, { status: 403 });
+
+    // Validate checkout text fields
+    if (!validateEmail(user_email)) return NextResponse.json({ error: 'A valid email address is required.' }, { status: 400 });
+    const nameResult    = validateText(user_name, 100);
+    const addressResult = validateText(user_address, 300);
+    const noteResult    = validateText(user_note || '', 500);
+    if (!nameResult.valid)    return NextResponse.json({ error: 'Name must be 100 characters or fewer.' }, { status: 400 });
+    if (!addressResult.valid) return NextResponse.json({ error: 'Address must be 300 characters or fewer.' }, { status: 400 });
+    if (!noteResult.valid)    return NextResponse.json({ error: 'Note must be 500 characters or fewer.' }, { status: 400 });
 
     const selections = normalizeSelections(bag_items);
     if (selections.length === 0) return NextResponse.json({ error: 'Bag is empty' }, { status: 400 });
@@ -76,6 +86,11 @@ export async function POST(request, { params }) {
     const { user_email, security_token, hp_data } = body;
     if (hasFilledHoneypot(hp_data)) return NextResponse.json({ success: true });
     if (!(await verifyTurnstile(security_token))) return NextResponse.json({ error: 'Security failed' }, { status: 403 });
+
+    // Validate email before hitting Resend API
+    if (!validateEmail(user_email)) {
+      return NextResponse.json({ error: 'A valid email address is required.' }, { status: 400 });
+    }
 
     const resend = new Resend(process.env.RESEND_API_KEY);
     const settings = getEmailSettings();

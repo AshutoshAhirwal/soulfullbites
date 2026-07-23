@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { getUserFromCookies, sanitizeUser, hashPassword, verifyPassword, issueUserToken, setUserCookie } from '@/lib/user-auth';
 import { dbQuery, ensureUsersTable } from '@/lib/db';
 import { cleanText } from '@/lib/http';
+import { checkRateLimit, sanitizeError } from '@/lib/security';
+import { validateText, validatePassword, validatePhone } from '@/lib/validation';
 
 export async function GET() {
   try {
@@ -19,8 +21,7 @@ export async function GET() {
 
     return NextResponse.json({ user: sanitizeUser(rows[0]) });
   } catch (err) {
-    console.error('Failed to get customer profile:', err);
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    return NextResponse.json({ error: sanitizeError(err, 'profile-get') }, { status: 500 });
   }
 }
 
@@ -36,11 +37,19 @@ export async function PATCH(request) {
     await ensureUsersTable();
 
     if (section === 'password') {
+      // Rate limit password changes: 5 attempts per 15 minutes per user
+      if (!checkRateLimit(`passwd_change_${userPayload.sub}`, 5, 15 * 60_000)) {
+        return NextResponse.json({ error: 'Too many password change attempts. Try again later.' }, { status: 429 });
+      }
+
       if (!cleanText(currentPassword) || !cleanText(newPassword)) {
         return NextResponse.json({ error: 'Current and new passwords are required.' }, { status: 400 });
       }
-      if (cleanText(newPassword).length < 8) {
-        return NextResponse.json({ error: 'New password must be at least 8 characters.' }, { status: 400 });
+
+      // Enforce password strength
+      const passwordError = validatePassword(cleanText(newPassword));
+      if (passwordError) {
+        return NextResponse.json({ error: passwordError }, { status: 400 });
       }
 
       const rows = await dbQuery('SELECT * FROM users WHERE id = $1 LIMIT 1', [userPayload.sub]);
@@ -63,11 +72,21 @@ export async function PATCH(request) {
     const updates = [];
     const values = [];
 
-    if (cleanText(name)) {
-      values.push(cleanText(name));
-      updates.push(`name = $${values.length}`);
+    if (name !== undefined) {
+      const nameResult = validateText(name, 100);
+      if (!nameResult.valid) {
+        return NextResponse.json({ error: 'Name must be 100 characters or fewer.' }, { status: 400 });
+      }
+      if (nameResult.value) {
+        values.push(nameResult.value);
+        updates.push(`name = $${values.length}`);
+      }
     }
+
     if (phone !== undefined) {
+      if (!validatePhone(phone)) {
+        return NextResponse.json({ error: 'Invalid phone number format.' }, { status: 400 });
+      }
       values.push(cleanText(phone));
       updates.push(`phone = $${values.length}`);
     }
@@ -91,7 +110,6 @@ export async function PATCH(request) {
 
     return NextResponse.json({ success: true, user: sanitizeUser(rows[0]) });
   } catch (err) {
-    console.error('Failed to update customer profile:', err);
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    return NextResponse.json({ error: sanitizeError(err, 'profile-patch') }, { status: 500 });
   }
 }

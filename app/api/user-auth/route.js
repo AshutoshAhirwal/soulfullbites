@@ -13,8 +13,10 @@ import {
   getClientIp, 
   checkHoneypot, 
   verifyHCaptcha, 
-  checkOrigin 
+  checkOrigin,
+  sanitizeError
 } from '@/lib/security';
+import { validateEmail, validatePassword } from '@/lib/validation';
 import crypto from 'node:crypto';
 
 // ── GET: Check Session ───────────────────────────────────────────────────────
@@ -55,6 +57,10 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Email and password are required' }, { status: 400 });
     }
 
+    if (!validateEmail(email)) {
+      return NextResponse.json({ error: 'Invalid email address.' }, { status: 400 });
+    }
+
     await ensureUsersTable();
     const rows = await dbQuery('SELECT * FROM users WHERE email = $1 LIMIT 1', [email.toLowerCase().trim()]);
     const user = rows[0];
@@ -73,7 +79,7 @@ export async function POST(request) {
 
     return NextResponse.json({ success: true, user: sanitizeUser(user) });
   } catch (err) {
-    return NextResponse.json({ error: 'Login failed' }, { status: 500 });
+    return NextResponse.json({ error: sanitizeError(err, 'user-auth-login') }, { status: 500 });
   }
 }
 
@@ -103,8 +109,19 @@ export async function PUT(request) {
     }
 
     const { name, email, password, phone } = body;
-    if (!name || !email || !password || password.length < 8) {
+    if (!name || !email || !password) {
       return NextResponse.json({ error: 'Invalid registration data' }, { status: 400 });
+    }
+
+    // Validate email format
+    if (!validateEmail(email)) {
+      return NextResponse.json({ error: 'Invalid email address.' }, { status: 400 });
+    }
+
+    // Enforce password strength
+    const passwordError = validatePassword(password.trim());
+    if (passwordError) {
+      return NextResponse.json({ error: passwordError }, { status: 400 });
     }
 
     await ensureUsersTable();
@@ -128,8 +145,7 @@ export async function PUT(request) {
 
     return NextResponse.json({ success: true, user: sanitizeUser(user) }, { status: 201 });
   } catch (err) {
-    console.error('Registration error:', err);
-    return NextResponse.json({ error: 'Registration failed' }, { status: 500 });
+    return NextResponse.json({ error: sanitizeError(err, 'user-auth-register') }, { status: 500 });
   }
 }
 

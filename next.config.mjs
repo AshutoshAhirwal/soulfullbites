@@ -1,6 +1,16 @@
 /** @type {import('next').NextConfig} */
 
 const securityHeaders = [
+  // Force HTTPS for 2 years; eligible for browser preload lists
+  {
+    key: 'Strict-Transport-Security',
+    value: 'max-age=63072000; includeSubDomains; preload',
+  },
+  // Disable DNS prefetching to avoid leaking visited subresources to DNS resolvers
+  {
+    key: 'X-DNS-Prefetch-Control',
+    value: 'off',
+  },
   // Prevents the site from being embedded in iframes (clickjacking protection)
   {
     key: 'X-Frame-Options',

@@ -5,4 +5,8 @@ dist/
 .npm/
 .yarn/
 .pnpm-store/
+
+# Next.js build outputs (never commit these)
 .next/
+docker-next/
+out/
