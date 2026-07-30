@@ -1,0 +1,31 @@
+# SoulfullBites
+
+> Artisanal, small-batch chocolate brand selling handmade bars crafted with organic mountain botanicals, stone-ground cacao, and ethically-sourced ingredients. Site is a React/Next.js storefront (hosted on Vercel) with storytelling content, an e-commerce shop (checkout via Razorpay), account/login, and a lifestyle "inspiration" section.
+
+SoulfullBites positions itself as a heritage, mindfulness-driven chocolate maker based in the mountains (sourcing from regions including Madagascar and Kerala). Products are hand-tempered in weekly micro-batches. The brand emphasizes 100% natural ingredients, zero-waste/compostable packaging, direct-trade farmer relationships, and reinvestment of profits into farmer-community education programs. Founder/credit: site built by Ashutosh Ahirwal (https://ashutosh-ahirwal.vercel.app/).
+
+## Core Pages
+
+- [Home](https://soulfullbites.vercel.app/): Brand landing page — hero intro ("Melting the finest cocoa"), origin story, craft process (72-hour stone grinding, hand-tempering), the three core flavor lines, and the ingredient/sourcing promise.
+- [Our Story](https://soulfullbites.vercel.app/about): Full brand narrative — founding story, terroir/sourcing details (Madagascar, Kerala), direct-trade philosophy, community impact (5% profit reinvestment into farmer education, trees planted counter), and sustainability commitments.
+- [Shop](https://soulfullbites.vercel.app/shop): Product catalog and cart (catalog loads dynamically via JS). Includes shopping bag, checkout flow, and a testimonials section (reviews unlock only for verified/delivered orders).
+- [Checkout](https://soulfullbites.vercel.app/checkout): Order checkout page, payments processed via Razorpay.
+- [Inspiration](https://soulfullbites.vercel.app/inspiration): Lifestyle/content hub ("The Codex") with chocolate rituals, recipes (e.g. Mountain Ganache), and gifting/styling ideas.
+- [FAQ](https://soulfullbites.vercel.app/faq): Support page for ordering, shipping, ingredients, gifting, and chocolate care questions (content loads dynamically via JS).
+- [Login](https://soulfullbites.vercel.app/login): Customer account sign-in / account creation, with order tracking, wishlist, saved addresses, and member-exclusive offers.
+
+## Products (Flavor Lines)
+
+- Dark & Bold: 75% single-origin cacao, intense and earthy.
+- Milk & Velvet: Creamy, slow-roasted milk chocolate with caramelised notes.
+- White & Rose: White chocolate with dried rose petals and sea salt.
+
+## Social
+
+- [Instagram](https://www.instagram.com/soulfulbitesofficial/): Official brand Instagram account.
+
+## Notes
+
+- Several interactive elements (product catalog, FAQ answers, testimonials) render client-side via JavaScript, so a plain fetch of these pages returns placeholder/loading text rather than full content.
+- Some inline links on the site (e.g. "Full Ritual," "Styling Guide," a referenced recipe page) are placeholders/broken (404) as of this analysis.
+- Site copyright: © 2026 SoulfullBites.
