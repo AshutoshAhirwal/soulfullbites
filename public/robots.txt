@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /checkout
+Disallow: /login
+
+Sitemap: https://soulfullbites.vercel.app/sitemap.xml
